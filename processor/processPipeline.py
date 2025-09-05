@@ -12,13 +12,11 @@ def md5_checksum(data):
     return hashlib.md5(data).hexdigest()
 
 class ProcessPipeline:
-    def __init__(self, configStore):
-        self.cs = configStore
-
-        self.open_logs_process = OpenLogsProcess(self.cs)
-        self.split_log_lines_process = SplitLogLinesProcess(self.cs)
-        self.filter_logs_process = FilterLogsProcess(self.cs)
-        self.color_logs_process = ColorLogsProcess(self.cs)
+    def __init__(self):
+        self.open_logs_process = OpenLogsProcess()
+        self.split_log_lines_process = SplitLogLinesProcess()
+        self.filter_logs_process = FilterLogsProcess()
+        self.color_logs_process = ColorLogsProcess()
 
         self.filter_logs_process.attach(self.color_logs_process)
         self.split_log_lines_process.attach(self.filter_logs_process)

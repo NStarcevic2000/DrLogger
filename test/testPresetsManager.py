@@ -1,7 +1,9 @@
+import unittest
+
 import json
 import os
 import tempfile
-import unittest
+
 from util.presetsManager import PresetsManager
 
 class TestPresetsManager(unittest.TestCase):

@@ -1,26 +1,18 @@
 import tempfile
 import unittest
 
-from util.configStore import Config, ConfigStore
-from configStoreImpl import KEEP_SOURCE_FILE_LOCATION_ENUM
-
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
-
 from enum import Enum
+
+from util.config_store import Config, ConfigStore
+from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
 from processor.openLogsProc import OpenLogsProcess
 
-
 class TestOpenLogsProcess(unittest.TestCase):
     def setUp(self):
-        self.cs = ConfigStore("sample_config_store", 
-            ConfigStore("open_logs",
-                Config("log_files", [], type_of=list, element_type=str),
-                Config("keep_source_file_location", KEEP_SOURCE_FILE_LOCATION_ENUM, type_of=Enum),
-            )
-        )
-        self.processor = OpenLogsProcess(self.cs)
+        self.processor = OpenLogsProcess()
 
         # Create a temporary file with sample log data
         self.tmp_file = tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.log', encoding='utf-8')
@@ -36,8 +28,10 @@ class TestOpenLogsProcess(unittest.TestCase):
 
     def test_process_single_file(self):
         # Test processing a single file
-        self.cs.set(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH.value)  # Full Path
-        result_df = self.processor.process(self.tmp_file.name)
+        result_df = self.processor.process(
+            data=self.tmp_file.name,
+            keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH.value
+        )
 
         self.assertIsInstance(result_df, DataFrame)
         self.assertEqual(len(result_df), 3)
@@ -53,8 +47,10 @@ class TestOpenLogsProcess(unittest.TestCase):
         tmp_file2.flush()
         tmp_file2.close()
 
-        self.cs.set(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.FILE_ONLY.value)
-        result_df = self.processor.process([self.tmp_file.name, tmp_file2.name])
+        result_df = self.processor.process(
+            data=[self.tmp_file.name, tmp_file2.name],
+            keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.FILE_ONLY.value
+        )
 
         self.assertIsInstance(result_df, DataFrame)
         self.assertEqual(len(result_df), 5)
@@ -71,16 +67,20 @@ class TestOpenLogsProcess(unittest.TestCase):
 
     def test_process_no_files(self):
         # Test processing with no files
-        self.cs.set(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value)  # None
-        result_df = self.processor.process([])
+        result_df = self.processor.process(
+            data=[],
+            keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value
+        )
 
         self.assertIsInstance(result_df, DataFrame)
         self.assertEqual(len(result_df), 0)
 
     def test_process_short_path(self):
         # Test processing with Short Path
-        self.cs.set(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH.value)  # Short Path
-        result_df = self.processor.process(self.tmp_file.name)
+        result_df = self.processor.process(
+            data=self.tmp_file.name,
+            keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH.value
+        )
 
         self.assertIsInstance(result_df, DataFrame)
         self.assertEqual(len(result_df), 3)
@@ -90,9 +90,11 @@ class TestOpenLogsProcess(unittest.TestCase):
         assert_frame_equal(result_df, expected_df)
 
     def test_read_cached_data(self):
-        self.cs.set(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH.value)  # Full Path
         # Test reading cached data after processing
-        self.processor.process(self.tmp_file.name)
+        self.processor.process(
+            data=self.tmp_file.name,
+            keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH.value
+        )
         cached_data = self.processor.read_cached_data()
 
         self.assertIsInstance(cached_data, DataFrame)

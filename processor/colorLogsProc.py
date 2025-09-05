@@ -6,26 +6,11 @@ from PyQt5.QtGui import QColor
 
 from pandas import DataFrame
 
-from util.configStore import ConfigStore
-
-class ColorLogsUtils():
-    def __init__(self, configStore:ConfigStore):
-        self.cs = configStore
-
-    def update_colors(self, table:QTableWidget, color_metadata:DataFrame):
-        if self.cs.get(self.cs.r.color_logs.color_logs_enabled, True) is False or color_metadata.empty:
-            return
-        for i, (foreground_color, background_color) in enumerate(zip(color_metadata["Foreground"], color_metadata["Background"])):
-            for j in range(table.columnCount()):
-                item = table.item(i, j)
-                if item:
-                    item.setForeground(QColor(foreground_color))
-                    item.setBackground(QColor(background_color))
-
+from util.config_store import ConfigManager as CfgMan
 
 class ColorLogsProcess(ProcessorInterface):
-    def __init__(self, configStore:ConfigStore, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
-        self.cs = configStore
+    def __init__(self, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
+        
         self.cached_data = DataFrame()
         self.cached_metadata = DataFrame(columns=["Foreground", "Background"])
         super().__init__("ColorLogsProcess", on_start, on_done, on_error)
@@ -34,12 +19,12 @@ class ColorLogsProcess(ProcessorInterface):
     def process(self, data):
         if not isinstance(data, DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
-        if data.empty or self.cs.get(self.cs.r.color_logs.color_logs_enabled, True) is False:
+        if data.empty or CfgMan().get(CfgMan().r.color_logs.color_logs_enabled, True) is False:
             print("Color logs process skipped due to empty data or disabled color logs.")
             self.cached_data = data
             return data
         
-        color_scheme = self.cs.get(self.cs.r.color_logs.color_scheme, [])
+        color_scheme = CfgMan().get(CfgMan().r.color_logs.color_scheme, [])
         
         # Initialize columns with default colors
         data["Foreground"] = "#000000"

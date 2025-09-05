@@ -3,20 +3,21 @@ from processor.processorIntf import ProcessorInterface
 
 from pandas import DataFrame
 
-from util.configStore import ConfigStore
-from configStoreImpl import KEEP_SOURCE_FILE_LOCATION_ENUM
+from util.config_store import ConfigManager as CfgMan
+from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
 class OpenLogsProcess(ProcessorInterface):
-    def __init__(self, configStore:ConfigStore, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
-        self.cs = configStore
+    def __init__(self, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
         self.cached_data = DataFrame()
         super().__init__("OpenLogsProcess", on_start, on_done, on_error)
 
     # We expect input to represent log file paths
-    def process(self, data: str | list | DataFrame | None = None):
+    def process(self,
+                data: str | list | DataFrame | None = None,
+                keep_source_file_location_arg:KEEP_SOURCE_FILE_LOCATION_ENUM|None=None) -> DataFrame:
         file_paths = []
         if data is None:
-            data = list(self.cs.get(self.cs.r.open_logs.log_files, []))
+            data = list(CfgMan().get(CfgMan().r.open_logs.log_files, []))
         if isinstance(data, str):
             file_paths.append(data)
         elif isinstance(data, list):
@@ -26,7 +27,10 @@ class OpenLogsProcess(ProcessorInterface):
         
         print(f"File paths to process: {data}")
 
-        keepSourceFileLocation = self.cs.get(self.cs.r.open_logs.keep_source_file_location, None)
+        if keep_source_file_location_arg is not None:
+            keepSourceFileLocation = keep_source_file_location_arg
+        else:
+            keepSourceFileLocation = CfgMan().get(CfgMan().r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value)
         common_prefix = None
         rows = []
 

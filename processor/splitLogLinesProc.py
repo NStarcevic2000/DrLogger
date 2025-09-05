@@ -4,16 +4,18 @@ from processor.processorIntf import ProcessorInterface
 from pandas import DataFrame
 import re
 
-from util.configStore import ConfigStore
+from util.config_store import ConfigManager as CfgMan
 
 class SplitLogLinesProcess(ProcessorInterface):
-    def __init__(self, configStore:ConfigStore, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
-        self.cs = configStore
+    def __init__(self, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
+        
         self.cached_data = DataFrame()
         super().__init__("SplitLogLinesProcess", on_start, on_done, on_error)
 
     # We expect input to be dataframe type with at least a 'Line' column
-    def process(self, data):
+    def process(self, data,
+                pattern_format_arg:str|None=None,
+                timestamp_format_arg:str|None=None) -> DataFrame:
         if not isinstance(data, DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
         if 'Line' not in data.columns:
@@ -29,12 +31,16 @@ class SplitLogLinesProcess(ProcessorInterface):
         # Group2: 1, 2, 3
         # Group3: abc, def, ghi
         # Message: Message 1 cba, Message 2 fed, Message 3 ihg
-        pattern = self.cs.get(self.cs.r.process_logs.input_pattern, "").strip()
+        if pattern_format_arg is not None:
+            pattern = pattern_format_arg.strip()
+        else:
+            pattern = CfgMan().get(CfgMan().r.process_logs.input_pattern, "").strip()
         if not pattern:
             self.cached_data = data
             return data
         # Replace <Group> with named group that matches any regex word (all but separators)
         regex_pattern = re.sub(r'<(.+?)>', r'(?P<\1>\\w+)', pattern)
+        # Replace spaces with \s+ to match any whitespace
         regex_pattern = re.sub(r' ', r'\\s+', regex_pattern)
         
         # Apply regex to each Line in the DataFrame
@@ -53,10 +59,13 @@ class SplitLogLinesProcess(ProcessorInterface):
         # Apply timestamp format if specified
         # ex. <Year>-<Month>-<Day> <Hour>:<Minutes>:<Seconds>
         # These tags must exist and are already processed in separate columns
-        timestamp_format = self.cs.get(self.cs.r.process_logs.timestamp_format, "").strip()
-        timestamp_tags = re.findall(r'<(.+?)>', timestamp_format)
-        agg_format = re.sub(r'<(.+?)>', r'{}', timestamp_format)
-        if timestamp_format:
+        if timestamp_format_arg is not None:
+            timestamp_format_arg = timestamp_format_arg.strip()
+        else:
+            timestamp_format_arg = CfgMan().get(CfgMan().r.process_logs.timestamp_format, "").strip()
+        timestamp_tags = re.findall(r'<(.+?)>', timestamp_format_arg)
+        agg_format = re.sub(r'<(.+?)>', r'{}', timestamp_format_arg)
+        if timestamp_format_arg:
             if False not in [tag in data.columns for tag in timestamp_tags]:
                 # Apply extraction from columns to 'Timestamp' column
                 # Insert as column 2

@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QComboBox, QHBoxLayout, QLabel, QPushButton
 import json
 
-from util.configStore import ConfigStore
+from util.config_store import ConfigManager as CfgMan
 from enum import Enum
 
 from gui.common.config_entry_intf import IConfigEntry
@@ -13,10 +13,9 @@ class PRESET_OPTION(Enum):
 class PresetSelector(IConfigEntry):
     def __init__(self,
                  parent,
-                 configStore: ConfigStore,
                  configStoreNode: str):
         self.parent = parent
-        self.cs: ConfigStore = configStore.get(configStoreNode)
+        self.configStoreNode = configStoreNode
         self.cached_presets:list = []
         self.cached_current_preset: str = ""
 
@@ -46,7 +45,7 @@ class PresetSelector(IConfigEntry):
         current_text = self.element.currentText()
         self.element.blockSignals(True)
         self.element.clear()
-        self.element.addItems(self.cs.list_presets())
+        self.element.addItems(CfgMan().get(self.configStoreNode).list_presets())
         self.element.setCurrentText(current_text)
         self.element.blockSignals(False)
         # Define button text by the current state of the preset
@@ -55,11 +54,11 @@ class PresetSelector(IConfigEntry):
             self.func_button.setText(PRESET_OPTION.ADD.value)
             self.func_button.setEnabled(False)
             self.func_button.blockSignals(False)
-        elif self.element.currentText() in self.cs.list_presets():
+        elif self.element.currentText() in CfgMan().get(self.configStoreNode).list_presets():
             self.func_button.blockSignals(True)
             self.func_button.setText(PRESET_OPTION.MODIFY.value)
             self.func_button.blockSignals(False)
-            if self.cs.get_serialized() != self.cs.get_serialized(self.cs.get_preset(self.element.currentText())):
+            if CfgMan().get(self.configStoreNode).get_serialized() != CfgMan().get(self.configStoreNode).get_serialized(CfgMan().get(self.configStoreNode).get_preset(self.element.currentText())):
                 self.func_button.blockSignals(True)
                 self.func_button.setEnabled(True)
                 self.func_button.blockSignals(False)
@@ -74,12 +73,12 @@ class PresetSelector(IConfigEntry):
             self.func_button.blockSignals(False)
 
     def on_func_button_clicked(self):
-        self.cs.save_preset(self.element.currentText())
+        CfgMan().get(self.configStoreNode).save_preset(self.element.currentText())
         self.on_config_updated()
 
     def on_preset_selected(self):
         # Set selected preset
-        self.cs.apply_preset(self.element.currentText())
+        CfgMan().get(self.configStoreNode).apply_preset(self.element.currentText())
         self.on_config_updated()
     
     def on_config_updated(self):

@@ -1,16 +1,14 @@
 from PyQt5.QtWidgets import QCheckBox, QHBoxLayout, QLabel
 
-from util.configStore import ConfigStore
+from util.config_store import ConfigManager as CfgMan
 from gui.common.config_entry_intf import IConfigEntry
 
 class BoolConfigEntry(IConfigEntry):
     def __init__(self,
                  parent,
-                 configStore: ConfigStore,
                  descriptor_text: str,
                  config_name: str):
         self.parent = parent
-        self.cs = configStore
         self.config_name = config_name
 
         # ----- Layout -----
@@ -28,10 +26,10 @@ class BoolConfigEntry(IConfigEntry):
 
     def update_content(self):
         self.element.blockSignals(True)
-        self.element.setChecked(self.cs.get(self.config_name, False))
+        self.element.setChecked(CfgMan().get(self.config_name, False))
         self.element.blockSignals(False)
 
     def on_config_updated(self):
-        self.cs.set(self.config_name, self.element.isChecked())
+        CfgMan().set(self.config_name, self.element.isChecked())
         if self.parent and hasattr(self.parent, 'update_content'):
             self.parent.update_content()

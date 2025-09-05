@@ -1,18 +1,16 @@
 from PyQt5.QtWidgets import QLineEdit, QHBoxLayout, QLabel
 from PyQt5.QtGui import QIntValidator
 
-from util.configStore import ConfigStore
+from util.config_store import ConfigManager as CfgMan
 from gui.common.config_entry_intf import IConfigEntry
 
 class StringConfigEntry(IConfigEntry):
     def __init__(self,
                  parent,
-                 configStore: ConfigStore,
                  descriptor_text: str,
                  config_name: str,
                  assert_type:type|None=None):
         self.parent = parent
-        self.cs = configStore
         self.config_name = config_name
         self.assert_type = assert_type
 
@@ -34,7 +32,7 @@ class StringConfigEntry(IConfigEntry):
 
     def update_content(self):
         self.element.blockSignals(True)
-        ret = self.cs.get(self.config_name, "" if self.assert_type != int else 0)
+        ret = CfgMan().get(self.config_name, "" if self.assert_type != int else 0)
         self.element.setText(str(ret) if self.assert_type == int else ret)
         self.element.blockSignals(False)
 
@@ -45,8 +43,8 @@ class StringConfigEntry(IConfigEntry):
                 value = int(text)
             except ValueError:
                 value = 0
-            self.cs.set(self.config_name, value)
+            CfgMan().set(self.config_name, value)
         else:
-            self.cs.set(self.config_name, text)
+            CfgMan().set(self.config_name, text)
         if self.parent and hasattr(self.parent, 'update_content'):
             self.parent.update_content()

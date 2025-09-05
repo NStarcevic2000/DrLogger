@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLabel, QComboBox, QCheckBox, QHBoxLayout, QTextEdit, QLineEdit
 from PyQt5.QtCore import Qt
 
-from util.configStore import ConfigStore
+from util.config_store import ConfigManager as CfgMan
 import json
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 from PyQt5.QtWidgets import QTableWidgetItem
@@ -12,11 +12,10 @@ from PyQt5.QtWidgets import (
 )
 
 class PresetPrompt(QDialog):
-    def __init__(self, configStore: ConfigStore):
+    def __init__(self):
         super().__init__()
         self.setWindowTitle("Preset Prompt")
         self.setGeometry(100, 100, 900, 600)
-        self.cs:ConfigStore = configStore
         self.pm_map:dict = {}
 
         self.update_pm_map()
@@ -93,9 +92,9 @@ class PresetPrompt(QDialog):
     
     def update_pm_map(self):
         self.pm_map = {
-            self.cs.r.process_logs.name: self.cs.get(self.cs.r.process_logs.name).get_all_presets(),
-            self.cs.r.color_logs.name: self.cs.get(self.cs.r.color_logs.name).get_all_presets(),
-            self.cs.r.filter_logs.name: self.cs.get(self.cs.r.filter_logs.name).get_all_presets(),
+            CfgMan().r.process_logs.name: CfgMan().get(CfgMan().r.process_logs.name).get_all_presets(),
+            CfgMan().r.color_logs.name: CfgMan().get(CfgMan().r.color_logs.name).get_all_presets(),
+            CfgMan().r.filter_logs.name: CfgMan().get(CfgMan().r.filter_logs.name).get_all_presets(),
         }
 
     def populate_tree(self):
@@ -157,7 +156,7 @@ class PresetPrompt(QDialog):
         self.checked_json_view.setPlainText(json.dumps(checked_presets, indent=2))
 
     def populate_detail_table(self, category, preset_name):
-        preset_data = self.cs.get(category).get_preset(preset_name)
+        preset_data = CfgMan().get(category).get_preset(preset_name)
         if not isinstance(preset_data, dict):
             self.detail_table.setRowCount(0)
             return
@@ -181,7 +180,7 @@ class PresetPrompt(QDialog):
                 value_item = self.detail_table.item(row, 1)
                 if key_item is not None and value_item is not None:
                     data[key_item.text()] = value_item.text()
-            self.cs.get(category).save_preset(preset_name, data)
+            CfgMan().get(category).save_preset(preset_name, data)
         self.detail_table.itemChanged.connect(save_preset_from_table)
         self.detail_table.blockSignals(False)
 
@@ -213,7 +212,7 @@ class PresetPrompt(QDialog):
                 imported = json.load(f)
                 for category, presets_dict in imported.items():
                     if isinstance(presets_dict, dict):
-                        cs_category = self.cs.get(category)
+                        cs_category = CfgMan().get(category)
                         if cs_category is not None:
                             for preset_name, preset_value in presets_dict.items():
                                 cs_category.save_preset(preset_name, preset_value)

@@ -1,18 +1,16 @@
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QMessageBox, QTableWidget, QTableWidgetItem, QLineEdit, QFrame
-from PyQt5.QtGui import QIntValidator
+from PyQt5.QtGui import QIntValidator, QColor
 from PyQt5.QtCore import Qt
-
-from processor.colorLogsProc import ColorLogsUtils
 
 from pandas import DataFrame
 
+from util.config_store import ConfigManager as CfgMan
+
 class PreviewLogsSection(QVBoxLayout):
-    def __init__(self, parent, configStore:None, pipeline=None):
+    def __init__(self, parent:None, pipeline=None):
         super().__init__()
-        self.cs = configStore
         self.parent = parent
         self.pipeline = pipeline
-        self.clu = ColorLogsUtils(self.cs)
 
         # Add separator
         separator = QFrame()
@@ -51,10 +49,10 @@ class PreviewLogsSection(QVBoxLayout):
         # Limit to only set numbers
         self.preview_lines_edit.setValidator(QIntValidator(1, 1000, self.parent))
         self.preview_lines_edit.setText(
-            str(self.cs.get(self.cs.r.preferences.preview_max_lines, 5))
+            str(CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5))
         )  # Default to 5 lines
         self.preview_lines_edit.textChanged.connect(
-            lambda text: self.cs.set(self.cs.r.preferences.preview_max_lines, int(text)) if text.isdigit() else None
+            lambda text: CfgMan().set(CfgMan().r.preferences.preview_max_lines, int(text)) if text.isdigit() else None
         )
         
         hbox = QHBoxLayout()
@@ -85,8 +83,18 @@ class PreviewLogsSection(QVBoxLayout):
         self.pipeline.run()
         self.update()
     
+    def update_colors(self, table:QTableWidget, color_metadata:DataFrame):
+        if CfgMan().get(CfgMan().r.color_logs.color_logs_enabled, True) is False or color_metadata.empty:
+            return
+        for i, (foreground_color, background_color) in enumerate(zip(color_metadata["Foreground"], color_metadata["Background"])):
+            for j in range(table.columnCount()):
+                item = table.item(i, j)
+                if item:
+                    item.setForeground(QColor(foreground_color))
+                    item.setBackground(QColor(background_color))
+    
     def update(self):
-        max_lines = max(1, self.cs.get(self.cs.r.preferences.preview_max_lines, 5))
+        max_lines = max(1, CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5))
         # Populate the preview table with DataFrame passed from the pipeline
         if self.pipeline:
             logs = self.pipeline.get_data().head(max_lines)
@@ -109,7 +117,7 @@ class PreviewLogsSection(QVBoxLayout):
                 # Apply colors after all items are created
                 color_metadata = self.pipeline.get_color_metadata().head(max_lines)
                 if not color_metadata.empty and len(color_metadata) == num_rows:
-                    self.clu.update_colors(self.preview_logs_table, color_metadata)
+                    self.update_colors(self.preview_logs_table, color_metadata)
                 
                 # Set column resize modes: all columns except last are compressed, last is stretch
                 header = self.preview_logs_table.horizontalHeader()
