@@ -2,15 +2,26 @@ from typing import Callable
 from processor.processorIntf import ProcessorInterface
 
 from pandas import DataFrame, Series
+from enum import Enum
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
+from util.presetsManager import PresetsManager
 
 
 class FilterLogsProcess(ProcessorInterface):
     def __init__(self, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
-        
         self.cached_data = DataFrame()
+        CfgMan().register(
+            ConfigStore("filter_logs",
+                Config("filter_enabled", True, type_of=bool),
+                Config("filter_pattern", [], type_of=list, element_type=str),
+                Config("contextualize_lines", CONTEXTUALIZE_LINES_ENUM, type_of=Enum),
+                Config("contextualize_lines_count", 5, type_of=int),
+                Config("keep_hidden_logs", True, type_of=bool),
+                presetsmanager=PresetsManager("filter")
+            ),
+        )
         super().__init__("FilterLogsProcess", on_start, on_done, on_error)
 
     # We expect input to be dataframe type with at least a 'Line' column

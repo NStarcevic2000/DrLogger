@@ -6,13 +6,20 @@ from PyQt5.QtGui import QColor
 
 from pandas import DataFrame
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
+from util.presetsManager import PresetsManager
 
 class ColorLogsProcess(ProcessorInterface):
     def __init__(self, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
-        
         self.cached_data = DataFrame()
         self.cached_metadata = DataFrame(columns=["Foreground", "Background"])
+        CfgMan().register(
+            ConfigStore("color_logs",
+                Config("color_logs_enabled", True, type_of=bool),
+                Config("color_scheme", [], type_of=list, element_type=str),
+                presetsmanager=PresetsManager("color")
+            ),
+        )
         super().__init__("ColorLogsProcess", on_start, on_done, on_error)
 
     # We expect input to be dataframe type with at least a 'Line' column

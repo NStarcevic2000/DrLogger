@@ -1,14 +1,21 @@
 from typing import Callable
-from processor.processorIntf import ProcessorInterface
 
 from pandas import DataFrame
+from enum import Enum
 
-from util.config_store import ConfigManager as CfgMan
+from processor.processorIntf import ProcessorInterface
+from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
 class OpenLogsProcess(ProcessorInterface):
     def __init__(self, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
         self.cached_data = DataFrame()
+        CfgMan().register(
+            ConfigStore("open_logs",
+                Config("log_files", [], type_of=list, element_type=str),
+                Config("keep_source_file_location", KEEP_SOURCE_FILE_LOCATION_ENUM, type_of=Enum),
+            ),
+        )
         super().__init__("OpenLogsProcess", on_start, on_done, on_error)
 
     # We expect input to represent log file paths

@@ -4,12 +4,19 @@ from processor.processorIntf import ProcessorInterface
 from pandas import DataFrame
 import re
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
+from util.presetsManager import PresetsManager
 
 class SplitLogLinesProcess(ProcessorInterface):
     def __init__(self, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
-        
         self.cached_data = DataFrame()
+        CfgMan().register(
+            ConfigStore("process_logs",
+                Config("input_pattern", "", type_of=str),
+                Config("timestamp_format", "", type_of=str),
+                presetsmanager=PresetsManager("process")
+            ),
+        )
         super().__init__("SplitLogLinesProcess", on_start, on_done, on_error)
 
     # We expect input to be dataframe type with at least a 'Line' column
