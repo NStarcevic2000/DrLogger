@@ -85,7 +85,8 @@ class ConfigStore(dict):
         for arg in args:
             if isinstance(arg, ConfigStore) or isinstance(arg, Config):
                 if arg.name in self:
-                    raise ValueError(f"ConfigStore or Config with name {arg.name} already exists in {self.name}...")
+                    # raise ValueError(f"ConfigStore or Config with name {arg.name} already exists in {self.name}...")
+                    return
                 self[arg.name] = arg
             else:
                 raise ValueError(f"Value for {arg} must be ConfigStore or Config, got {type(arg)}")
