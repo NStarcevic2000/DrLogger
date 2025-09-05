@@ -17,21 +17,21 @@ class EnumConfigEntry(IConfigEntry):
         self.possible_values = enum_values
 
         # ----- Layout -----
-        self.wrapper = QHBoxLayout()
-        self.wrapper.setContentsMargins(0, 0, 0, 0)
-        self.wrapper.setSpacing(5)
+        self.container = QHBoxLayout()
+        self.container.setContentsMargins(0, 0, 0, 0)
+        self.container.setSpacing(5)
 
         self.label = QLabel(descriptor_text)
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.wrapper.addWidget(self.label)
+        self.container.addWidget(self.label)
 
         self.element = QComboBox()
         self.element.addItems(self.possible_values)
         self.element.setEditable(False)
         self.element.setMinimumWidth(120)
-        self.wrapper.addWidget(self.element)
+        self.container.addWidget(self.element)
 
-        self.wrapper.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.container.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         # ----- Connections -----
         self.element.currentIndexChanged.connect(self.on_config_updated)
 

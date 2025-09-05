@@ -71,6 +71,8 @@ class FilterLogsSection(QVBoxLayout):
             self.cs.r.filter_logs.contextualize_lines,
             CONTEXTUALIZE_LINES_ENUM.get_values()
         )
+        vbox.addLayout(self.contextualize_lines_type.container)
+        vbox.addStretch(1)
 
         hbox.addLayout(vbox)
         self.addLayout(hbox)
