@@ -72,8 +72,10 @@ class EditorPrompt(QDialog):
         self.close()
 
     def update(self):
+        self.open_files_section.update_content()
         self.process_logs_section.update_content()
         self.color_logs_section.update_content()
+        self.filter_logs_section.update_content()
         self.preview_logs_section.update()
 
     def set_status(self, message):

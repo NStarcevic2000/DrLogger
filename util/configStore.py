@@ -119,10 +119,10 @@ class ConfigStore(dict):
         if self.fsmanager:
             self.fsmanager.write_to_file(self)
 
-    def get_serialized(self):
+    def get_serialized(self, other_dict: dict = None) -> dict:
         """Returns a serialized version of the ConfigStore."""
         serialized = {}
-        for key, value in self.items():
+        for key, value in self.items() if other_dict is None else other_dict.items():
             if isinstance(value, ConfigStore):
                 serialized[key] = value.get_serialized()
             elif isinstance(value, Config):

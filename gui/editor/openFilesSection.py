@@ -5,6 +5,8 @@ from PyQt5.QtCore import Qt
 from util.configStore import ConfigStore
 from configStoreImpl import KEEP_SOURCE_FILE_LOCATION_ENUM
 
+from gui.common.enum_config_entry import EnumConfigEntry
+
 class OpenFilesSection(QVBoxLayout):
     def __init__(self, parent,
                  configStore:ConfigStore,
@@ -28,28 +30,13 @@ class OpenFilesSection(QVBoxLayout):
         hbox.addWidget(self.browse_button, alignment=Qt.AlignRight)
         self.addLayout(hbox)
 
-        self.keep_source_files_column_label = QLabel("Keep Source Files as Column:")
-        self.keep_source_files_column_combobox = QComboBox()
-        self.keep_source_files_column_combobox.setToolTip("Keep source files column in the logs table")
-        self.keep_source_files_column_combobox.addItems(KEEP_SOURCE_FILE_LOCATION_ENUM.get_values())
-        self.keep_source_files_column_combobox.setCurrentIndex(
-            KEEP_SOURCE_FILE_LOCATION_ENUM.get_values().index(
-                self.cs.get(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value)
-            )
+        self.keep_source_files_column_selector = EnumConfigEntry(
+            self,
+            self.cs,
+            "Keep Source Files as Column:",
+            self.cs.r.open_logs.keep_source_file_location,
+            KEEP_SOURCE_FILE_LOCATION_ENUM.get_values()
         )
-        self.keep_source_files_column_combobox.setFixedSize(self.keep_source_files_column_combobox.sizeHint())
-        self.keep_source_files_column_combobox.currentIndexChanged.connect(
-            lambda: self.cs.set(
-                self.cs.r.open_logs.keep_source_file_location,
-                self.keep_source_files_column_combobox.currentText()
-            )
-        )
-
-        hbox = QHBoxLayout()
-        hbox.addWidget(self.keep_source_files_column_label)
-        hbox.addWidget(self.keep_source_files_column_combobox)
-        hbox.setAlignment(Qt.AlignLeft)
-        self.addLayout(hbox)
 
         self.setAlignment(Qt.AlignTop)
 
@@ -74,3 +61,6 @@ class OpenFilesSection(QVBoxLayout):
                 self.label.setText(format.format(f"{'/'.join(files[0].split('/')[:-1])+"/..."} [{len(files)} files opened]"))
         else:
             self.label.setText("Open Logs: No files opened")
+    
+    def update_content(self):
+        self.keep_source_files_column_selector.update_content()
