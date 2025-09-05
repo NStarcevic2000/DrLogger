@@ -3,36 +3,33 @@ from PyQt5.QtWidgets import (
     QPushButton, QWidget, QMainWindow, QToolBar, QAction, QMessageBox, QShortcut
 )
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QKeySequence
+from PyQt5.QtGui import QFont, QKeySequence, QColor
 
 from pandas import DataFrame
 
-from util.configStore import ConfigStore
 from processor.processPipeline import ProcessPipeline
-
-from processor.colorLogsProc import ColorLogsUtils
+from util.config_store import ConfigManager as CfgMan
 
 from gui.editor.editorPrompt import EditorPrompt
 from gui.presetPrompt import PresetPrompt
 
 class DrLogMainWindow(QMainWindow):
-    def __init__(self, configStore: ConfigStore, processPipeline: ProcessPipeline):
+    def __init__(self):
         super().__init__()
-        self.cs = configStore
-        self.processPipeline = processPipeline
-        self.clu = ColorLogsUtils(configStore)
+        
+        self.processPipeline = ProcessPipeline()
 
         self.setWindowTitle("DrLog - All-in-one Log Viewer")
         self.setGeometry(200, 200, 1500, 700)
         
         self.font_size = 10  # Default font size
 
-        self.editor_prompt = EditorPrompt(self.cs, self.processPipeline, self.update)
+        self.editor_prompt = EditorPrompt(self.processPipeline, self.update)
         self.editor_prompt.setWindowModality(Qt.ApplicationModal)
         self.editor_prompt.setWindowFlag(Qt.WindowStaysOnTopHint, False)
         self.editor_prompt.show()
 
-        self.presets_prompt = PresetPrompt(self.cs)
+        self.presets_prompt = PresetPrompt()
         self.presets_prompt.setWindowModality(Qt.ApplicationModal)
         self.presets_prompt.setWindowFlag(Qt.WindowStaysOnTopHint, False)
 
@@ -79,6 +76,16 @@ class DrLogMainWindow(QMainWindow):
         self.font_size = max(self.font_size - 1, 6)
         self.set_table_font(self.font_size)
         self.main_table.verticalHeader().setDefaultSectionSize(self.font_size * 2)
+    
+    def update_colors(self, table:QTableWidget, color_metadata:DataFrame):
+        if CfgMan().get(CfgMan().r.color_logs.color_logs_enabled, True) is False or color_metadata.empty:
+            return
+        for i, (foreground_color, background_color) in enumerate(zip(color_metadata["Foreground"], color_metadata["Background"])):
+            for j in range(table.columnCount()):
+                item = table.item(i, j)
+                if item:
+                    item.setForeground(QColor(foreground_color))
+                    item.setBackground(QColor(background_color))
 
     def update(self):
         self.processPipeline.run()
@@ -98,4 +105,4 @@ class DrLogMainWindow(QMainWindow):
             header.setSectionResizeMode(len(data.columns) - 1, header.Stretch)
         else:
             print("Data is not a pandas DataFrame.")
-        self.clu.update_colors(self.main_table, self.processPipeline.get_color_metadata())
+        self.update_colors(self.main_table, self.processPipeline.get_color_metadata())

@@ -1,18 +1,16 @@
 from PyQt5.QtWidgets import QComboBox, QHBoxLayout, QLabel
 from PyQt5.QtCore import Qt
 
-from util.configStore import ConfigStore
+from util.config_store import ConfigManager as CfgMan
 from gui.common.config_entry_intf import IConfigEntry
 
 class EnumConfigEntry(IConfigEntry):
     def __init__(self,
                  parent,
-                 configStore: ConfigStore,
                  descriptor_text: str,
                  config_name: str,
                  enum_values:list[str]):
         self.parent = parent
-        self.cs = configStore
         self.config_name = config_name
         self.possible_values = enum_values
 
@@ -39,18 +37,18 @@ class EnumConfigEntry(IConfigEntry):
     
     def update_content(self):
         self.element.blockSignals(True)
-        current_value = self.cs.get(self.config_name, self.possible_values[0])
+        current_value = CfgMan().get(self.config_name, self.possible_values[0])
         if current_value in self.possible_values:
             index = self.possible_values.index(current_value)
             self.element.setCurrentIndex(index)
         else:
             print(f"Warning: Current value '{current_value}' not in possible values {self.possible_values}. Setting to default.")
             self.element.setCurrentIndex(0)
-            self.cs.set(self.config_name, self.possible_values[0])
+            CfgMan().set(self.config_name, self.possible_values[0])
         self.element.blockSignals(False)
     
     def on_config_updated(self):
         selected_value = self.element.currentText()
-        self.cs.set(self.config_name, selected_value)
+        CfgMan().set(self.config_name, selected_value)
         if self.parent and hasattr(self.parent, 'update_content'):
             self.parent.update_content()

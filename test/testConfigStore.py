@@ -1,8 +1,8 @@
 import unittest
 
-from util.configStore import ConfigStore, Config
-
 from enum import Enum
+
+from util.config_store import ConfigStore, Config
 
 class SampleEnum(Enum):
     VALUE1 = "value1"
