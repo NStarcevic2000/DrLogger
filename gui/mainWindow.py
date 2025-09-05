@@ -15,6 +15,10 @@ from processor.colorLogsProc import ColorLogsUtils
 from gui.editor.editorPrompt import EditorPrompt
 from gui.presetPrompt import PresetPrompt
 
+from gui.find_toolbar import FindToolbar
+from gui.footerNotebook import FooterNotebook
+from PyQt5.QtWidgets import QTabWidget
+
 class DrLogMainWindow(QMainWindow):
     def __init__(self, configStore: ConfigStore, processPipeline: ProcessPipeline):
         super().__init__()
@@ -41,6 +45,9 @@ class DrLogMainWindow(QMainWindow):
             "Presets": self.presets_prompt.show_updated,
         }
 
+        self.footer_notebook = FooterNotebook()
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.footer_notebook)
+
         self.toolbar = QToolBar("Main Toolbar")
         for action_name, callback in toolbar_cb.items():
             action = QAction(action_name, self)
@@ -48,6 +55,11 @@ class DrLogMainWindow(QMainWindow):
             self.toolbar.addAction(action)
         self.addToolBar(Qt.TopToolBarArea, self.toolbar)
         self.toolbar.setMovable(False)
+
+        self.find_toolbar = FindToolbar(self)
+        QShortcut(QKeySequence("Ctrl+F"), self, self.find_toolbar.toggle_visibility)
+        self.addToolBarBreak(Qt.TopToolBarArea)
+        self.addToolBar(Qt.TopToolBarArea, self.find_toolbar)
 
         self.main_table = QTableWidget()
         self.main_table.setColumnCount(1)
