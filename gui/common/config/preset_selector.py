@@ -4,7 +4,7 @@ import json
 from util.config_store import ConfigManager as CfgMan
 from enum import Enum
 
-from gui.common.config_entry_intf import IConfigEntry
+from gui.common.config.config_entry_intf import IConfigEntry
 
 class PRESET_OPTION(Enum):
     MODIFY = "Modify"

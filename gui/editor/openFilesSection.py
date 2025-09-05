@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt
 from util.config_store import ConfigManager as CfgMan
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
-from gui.common.enum_config_entry import EnumConfigEntry
+from gui.common.config.enum_config_entry import EnumConfigEntry
 
 class OpenFilesSection(QVBoxLayout):
     def __init__(self, parent,

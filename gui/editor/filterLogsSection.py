@@ -6,11 +6,11 @@ from PyQt5.QtCore import Qt
 from util.config_store import ConfigManager as CfgMan
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
 
-from gui.common.preset_selector import PresetSelector
-from gui.common.table_config_entry import TableConfigEntry, TABLE_EDIT_TYPE
-from gui.common.bool_config_entry import BoolConfigEntry
-from gui.common.string_config_entry import StringConfigEntry
-from gui.common.enum_config_entry import EnumConfigEntry
+from gui.common.config.preset_selector import PresetSelector
+from gui.common.config.table_config_entry import TableConfigEntry, TABLE_EDIT_TYPE
+from gui.common.config.bool_config_entry import BoolConfigEntry
+from gui.common.config.string_config_entry import StringConfigEntry
+from gui.common.config.enum_config_entry import EnumConfigEntry
 
 class FilterLogsSection(QVBoxLayout):
     def __init__(self, parent, pipeline=None, call_update_cb=None):

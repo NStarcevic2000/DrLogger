@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QCheckBox, QHBoxLayout, QLabel
 
 from util.config_store import ConfigManager as CfgMan
-from gui.common.config_entry_intf import IConfigEntry
+from gui.common.config.config_entry_intf import IConfigEntry
 
 class BoolConfigEntry(IConfigEntry):
     def __init__(self,

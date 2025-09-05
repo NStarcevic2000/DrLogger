@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QLineEdit, QHBoxLayout, QLabel
 from PyQt5.QtGui import QIntValidator
 
 from util.config_store import ConfigManager as CfgMan
-from gui.common.config_entry_intf import IConfigEntry
+from gui.common.config.config_entry_intf import IConfigEntry
 
 class StringConfigEntry(IConfigEntry):
     def __init__(self,

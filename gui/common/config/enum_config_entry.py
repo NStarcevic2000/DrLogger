@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QComboBox, QHBoxLayout, QLabel
 from PyQt5.QtCore import Qt
 
 from util.config_store import ConfigManager as CfgMan
-from gui.common.config_entry_intf import IConfigEntry
+from gui.common.config.config_entry_intf import IConfigEntry
 
 class EnumConfigEntry(IConfigEntry):
     def __init__(self,

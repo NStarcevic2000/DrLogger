@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt
 from enum import Enum
 
 from util.config_store import ConfigManager as CfgMan
-from gui.common.config_entry_intf import IConfigEntry
+from gui.common.config.config_entry_intf import IConfigEntry
 
 class TABLE_EDIT_TYPE(Enum):
     TEXT_EDIT = 0
