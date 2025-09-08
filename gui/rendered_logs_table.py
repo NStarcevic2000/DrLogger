@@ -60,6 +60,8 @@ class RenderedLogsTable(QTableView):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSortingEnabled(False)
         self.setModel(LogsTableModel(DataFrame(), DataFrame(), DataFrame()))
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.horizontalHeader().setStretchLastSection(True)
 
     def refresh(self, preview_lines: int | None = None):
         ProcessorManager().run()
@@ -72,7 +74,7 @@ class RenderedLogsTable(QTableView):
             )
         )
         self.resizeColumnsToContents()
-        # Last column takes all remaining space, but no overflow
-        if self.model().columnCount() > 0:
-            self.horizontalHeader().setStretchLastSection(True)
+        # Last column does not expand indefinitely; horizontal scrolling enabled
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.horizontalHeader().setStretchLastSection(True)
         self.setUpdatesEnabled(True)
