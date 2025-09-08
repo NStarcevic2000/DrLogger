@@ -1,32 +1,28 @@
 from typing import Callable
-from processor.processorIntf import ProcessorInterface
+
 
 from pandas import DataFrame
 import re
 
+from processor.processor_intf import IProcessor, DEFAULT_MESSAGE_COLUMN, DataColumn
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.presetsManager import PresetsManager
 
-class SplitLogLinesProcess(ProcessorInterface):
-    def __init__(self, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
-        self.cached_data = DataFrame()
-        CfgMan().register(
-            ConfigStore("process_logs",
+class SplitLogLinesProcessor(IProcessor):
+    def register_config_store(self) -> ConfigStore|Config|None:
+        return ConfigStore("process_logs",
                 Config("input_pattern", "", type_of=str),
                 Config("timestamp_format", "", type_of=str),
                 presetsmanager=PresetsManager("process")
-            ),
-        )
-        super().__init__("SplitLogLinesProcess", on_start, on_done, on_error)
+            )
 
-    # We expect input to be dataframe type with at least a 'Line' column
     def process(self, data,
                 pattern_format_arg:str|None=None,
                 timestamp_format_arg:str|None=None) -> DataFrame:
         if not isinstance(data, DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
-        if 'Line' not in data.columns:
-            raise ValueError("DataFrame must contain a 'Line' column")
+        if DEFAULT_MESSAGE_COLUMN not in data.columns:
+            raise ValueError("DataFrame must contain a DEFAULT_MESSAGE_COLUMN column")
         
         # Input:
         # Sample 1 abc:Message 1 cba
@@ -52,7 +48,7 @@ class SplitLogLinesProcess(ProcessorInterface):
         
         # Apply regex to each Line in the DataFrame
         try:
-            extracted = data['Line'].str.extract(regex_pattern, expand=True)
+            extracted = data[DEFAULT_MESSAGE_COLUMN].str.extract(regex_pattern, expand=True)
             for group in re.findall(r'<(.+?)>', pattern):
                 if group in extracted.columns:
                     data[group] = extracted[group]
@@ -83,24 +79,19 @@ class SplitLogLinesProcess(ProcessorInterface):
                 data.insert(len(timestamp_tags)+1, 'Timestamp', timestamp_col)
                 data.drop(columns=timestamp_tags, inplace=True, errors='ignore')
 
-        # Remove matched part (including separators) from 'Line' to get only the remaining message
+        # Remove matched part (including separators) from DEFAULT_MESSAGE_COLUMN to get only the remaining message
         last_group_match = list(re.finditer(r'<(.+?)>', pattern))
         if last_group_match:
             remove_regex = (
             re.sub(r'<(.+?)>', r'\\w+', pattern)
             .replace(' ', r'\s+')
             )
-            data['Message'] = data['Line'].str.replace(f'^{remove_regex}', '', regex=True).str.lstrip()
+            data[DEFAULT_MESSAGE_COLUMN] = data[DEFAULT_MESSAGE_COLUMN].str.replace(f'^{remove_regex}', '', regex=True).str.lstrip()
         else:
-            data['Message'] = data['Line']
+            data[DEFAULT_MESSAGE_COLUMN] = data[DEFAULT_MESSAGE_COLUMN]
 
-        # Drop 'Message' column if it is empty (all values are empty or NaN)
-        if data['Message'].isna().all() or (data['Message'].astype(str).str.strip() == '').all():
-            data = data.drop(columns=['Message'])
-        
-        # drop_columns = self.mCS.get(self.cs.r.process_logs.processor.drop_columns, [])
-        # print(f"Dropping columns: {drop_columns}")
-        drop_columns = []
-        # Convert the 'Line' column to 'Message' by removing
-        self.cached_data = data.drop(columns=['Line']+drop_columns, errors='ignore')
-        return self.cached_data
+        # Drop DEFAULT_MESSAGE_COLUMN column if it is empty (all values are empty or NaN)
+        if data[DEFAULT_MESSAGE_COLUMN].isna().all() or (data[DEFAULT_MESSAGE_COLUMN].astype(str).str.strip() == '').all():
+            data = data.drop(columns=[DEFAULT_MESSAGE_COLUMN])
+
+        return [DataColumn(data[col]) for col in data.columns if col != DEFAULT_MESSAGE_COLUMN] + ([DataColumn(data[DEFAULT_MESSAGE_COLUMN])])
