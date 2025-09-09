@@ -1,5 +1,4 @@
-from typing import Callable
-from processor.processorIntf import ProcessorInterface
+from processor.processor_intf import IProcessor, DEFAULT_MESSAGE_COLUMN, DataColumn, CollapsingRowsColumn
 
 from pandas import DataFrame, Series
 from enum import Enum
@@ -9,21 +8,17 @@ from util.config_enums import CONTEXTUALIZE_LINES_ENUM
 from util.presetsManager import PresetsManager
 
 
-class FilterLogsProcess(ProcessorInterface):
-    def __init__(self, on_start:Callable=None, on_done:Callable=None, on_error:Callable=None):
-        self.cached_data = DataFrame()
-        CfgMan().register(
-            ConfigStore("filter_logs",
+class FilterLogsProcessor(IProcessor):
+    def register_config_store(self) -> ConfigStore|Config|None:
+        return ConfigStore("filter_logs",
                 Config("filter_enabled", True, type_of=bool),
                 Config("filter_pattern", [], type_of=list, element_type=str),
                 Config("contextualize_lines", CONTEXTUALIZE_LINES_ENUM, type_of=Enum),
                 Config("contextualize_lines_count", 5, type_of=int),
                 Config("keep_hidden_logs", True, type_of=bool),
                 presetsmanager=PresetsManager("filter")
-            ),
-        )
-        super().__init__("FilterLogsProcess", on_start, on_done, on_error)
-
+            )
+    
     # We expect input to be dataframe type with at least a 'Line' column
     def process(self, data,
                 filter_pattern_arg:list|None=None,
@@ -51,7 +46,7 @@ class FilterLogsProcess(ProcessorInterface):
             if pattern_column == "" and pattern == "":
                 continue  # Skip empty patterns
             if pattern_column == "":
-                pattern_column = "Message"
+                pattern_column = DEFAULT_MESSAGE_COLUMN
             if pattern_column not in data.columns:
                 print(f"Column '{pattern_column}' not found in DataFrame, skipping this pattern.")
                 continue
@@ -85,28 +80,5 @@ class FilterLogsProcess(ProcessorInterface):
                     end = min(idx + contextualize_lines_count, data.index[-1])
                 mask.loc[start:end] = True
             data["show"] = mask
-        
-        # Replace consecutive hidden rows with a single marker row, but do not remove any rows
-        hidden_count = 0
-        if keep_hidden_logs_arg is not None:
-            keep_hidden_logs = keep_hidden_logs_arg
-        else:
-            keep_hidden_logs = CfgMan().get(CfgMan().r.filter_logs.keep_hidden_logs, False)
-        if keep_hidden_logs:
-            for i in range(len(data)):
-                if not data.iloc[i]["show"]:
-                    hidden_count += 1
-                    # If next row is shown or end of data, mark this row
-                    if i + 1 == len(data) or data.iloc[i + 1]["show"]:
-                        data.at[i, "show"] = True
-                        # All other columns should be set to empty
-                        for col in data.columns:
-                            if col != "show":
-                                data.at[i, col] = ""
-                        row_word = "row" if hidden_count == 1 else "rows"
-                        data.at[i, "Message"] = f"< filtered {hidden_count} {row_word} >"
-                        hidden_count = 0
-                else:
-                    hidden_count = 0
-        self.cached_data = data[data["show"]].drop(columns=["show"], errors='ignore')
-        return self.cached_data
+
+        return [CollapsingRowsColumn(data["show"])]

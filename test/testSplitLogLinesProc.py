@@ -7,7 +7,7 @@ from pandas.testing import assert_frame_equal
 
 from util.config_store import ConfigStore, Config
 
-from processor.splitLogLinesProc import SplitLogLinesProcess
+from processor.split_log_lines_processor import SplitLogLinesProcess
 
 class TestSplitLogLinesProcess(unittest.TestCase):
     def setUp(self):

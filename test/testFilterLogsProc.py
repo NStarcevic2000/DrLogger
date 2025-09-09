@@ -6,7 +6,7 @@ from pandas.testing import assert_frame_equal
 
 from util.config_store import ConfigStore, Config
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
-from processor.filterLogsProc import FilterLogsProcess
+from processor.filter_logs_processor import FilterLogsProcess
 
 class TestFilterLogsProcess(unittest.TestCase):
     def setUp(self):

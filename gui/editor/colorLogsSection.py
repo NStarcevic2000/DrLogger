@@ -9,10 +9,9 @@ from gui.common.table_config_entry import TableConfigEntry, TABLE_EDIT_TYPE
 from gui.common.bool_config_entry import BoolConfigEntry
 
 class ColorLogsSection(QVBoxLayout):
-    def __init__(self, parent, pipeline=None, call_update_cb=None):
+    def __init__(self, parent, call_update_cb=None):
         super().__init__()
         self.parent = parent
-        self.pipeline = pipeline
         self.call_update_cb = call_update_cb
 
         # Add separator
