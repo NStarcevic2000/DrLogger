@@ -8,9 +8,10 @@ from gui.common.preset_selector import PresetSelector
 from gui.common.string_config_entry import StringConfigEntry
 
 class ProcessLogsSection(QVBoxLayout):
-    def __init__(self, parent, call_update_cb=None):
+    def __init__(self, parent, pipeline=None, call_update_cb=None):
         super().__init__()
         self.parent = parent
+        self.pipeline = pipeline
         self.call_update_cb = call_update_cb
 
         # Add separator
