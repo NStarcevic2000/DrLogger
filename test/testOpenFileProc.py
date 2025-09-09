@@ -8,7 +8,7 @@ from enum import Enum
 from util.config_store import Config, ConfigStore
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
-from processor.open_logs_processor import OpenLogsProcess
+from processor.openLogsProc import OpenLogsProcess
 
 class TestOpenLogsProcess(unittest.TestCase):
     def setUp(self):

@@ -3,16 +3,17 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QChec
 from PyQt5.QtCore import Qt
 
 from util.config_store import ConfigManager as CfgMan
-from processor.processor_manager import ProcessorManager
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
 from gui.common.enum_config_entry import EnumConfigEntry
 
 class OpenFilesSection(QVBoxLayout):
     def __init__(self, parent,
+                 pipeline=None,
                  call_update_cb=None):
         super().__init__()
         self.parent = parent
+        self.pipeline = pipeline
         self.call_update_cb = call_update_cb
 
         self.label = QLabel()
@@ -33,7 +34,7 @@ class OpenFilesSection(QVBoxLayout):
             CfgMan().r.open_logs.keep_source_file_location,
             KEEP_SOURCE_FILE_LOCATION_ENUM.get_values()
         )
-        self.addLayout(self.keep_source_files_column_selector.container)
+
         self.setAlignment(Qt.AlignTop)
 
     def open_logs_cmd(self):
@@ -44,7 +45,7 @@ class OpenFilesSection(QVBoxLayout):
         if files:
             CfgMan().set(CfgMan().r.open_logs.log_files, files)
         self.set_label()
-        ProcessorManager().run()
+        self.pipeline.run()
         self.call_update_cb()
     
     def set_label(self):
