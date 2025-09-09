@@ -81,4 +81,12 @@ class FilterLogsProcessor(IProcessor):
                 mask.loc[start:end] = True
             data["show"] = mask
 
-        return [CollapsingRowsColumn(data["show"])]
+        if keep_hidden_logs_arg is None:
+            keep_hidden_logs = CfgMan().get(CfgMan().r.filter_logs.keep_hidden_logs, True)
+        else:
+            keep_hidden_logs = keep_hidden_logs_arg
+
+        return [\
+            CollapsingRowsColumn(data["show"]).set_heading_pattern("< Filtered {count} row(s)>") if keep_hidden_logs \
+                else CollapsingRowsColumn(data["show"])
+        ]
