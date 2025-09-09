@@ -35,7 +35,7 @@ class ProcessorManager:
             print(f"Running processor: {processor.__class__.__name__}")
             start_time = time.time()
             try:
-                input_data = LogsManager().get_data() if processor != self.processors[0] else CfgMan().get(CfgMan().r.open_logs.log_files)
+                input_data = LogsManager().get_visible_data() if processor != self.processors[0] else CfgMan().get(CfgMan().r.open_logs.log_files)
                 returned_columns = processor.process(input_data)
                 if returned_columns is not None:
                     LogsManager().update_data(returned_columns)

@@ -31,12 +31,11 @@ if __name__ == "__main__":
     viewer = DrLogMainWindow()
     viewer.show()
     # Benchmark performance of initial rendering
-    profiler = cProfile.Profile()
-    profiler.enable()
-    viewer.update()
-    profiler.disable()
-    profiler.print_stats(sort='cumtime')
-
-    print(LogsManager().get_rendered_data())
+    # profiler = cProfile.Profile()
+    # profiler.enable()
+    # viewer.update()
+    # profiler.disable()
+    # profiler.print_stats(sort='cumtime')
+    # print(LogsManager().get_rendered_data())
 
     sys.exit(app.exec_())

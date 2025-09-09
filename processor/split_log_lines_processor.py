@@ -90,8 +90,4 @@ class SplitLogLinesProcessor(IProcessor):
         else:
             data[DEFAULT_MESSAGE_COLUMN] = data[DEFAULT_MESSAGE_COLUMN]
 
-        # Drop DEFAULT_MESSAGE_COLUMN column if it is empty (all values are empty or NaN)
-        if data[DEFAULT_MESSAGE_COLUMN].isna().all() or (data[DEFAULT_MESSAGE_COLUMN].astype(str).str.strip() == '').all():
-            data = data.drop(columns=[DEFAULT_MESSAGE_COLUMN])
-
-        return [DataColumn(data[col]) for col in data.columns if col != DEFAULT_MESSAGE_COLUMN] + ([DataColumn(data[DEFAULT_MESSAGE_COLUMN])])
+        return ([DataColumn(data[col]) for col in data.columns if col != DEFAULT_MESSAGE_COLUMN] + [DataColumn(data[DEFAULT_MESSAGE_COLUMN])])

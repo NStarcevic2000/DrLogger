@@ -1,3 +1,4 @@
+import os
 from typing import Callable
 
 from pandas import DataFrame
@@ -28,27 +29,42 @@ class OpenLogsProcessor(IProcessor):
             file_paths.extend(data)
         elif isinstance(data, DataFrame):
             file_paths.extend(data['file_path'].tolist())
-        
-        print(f"File paths to process: {data}")
 
         if keep_source_file_location_arg is not None:
             keepSourceFileLocation = keep_source_file_location_arg
         else:
             keepSourceFileLocation = CfgMan().get(CfgMan().r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value)
-        common_prefix = None
+
+        common_path_prefix = ""
+        if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value: # No prefix to remove
+            common_path_prefix = ""
+        elif keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH.value: # Remove common path prefix
+            common_path_prefix = os.path.commonpath(file_paths)
         rows = []
-
-        if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH: # Short Path
-            if len(file_paths) > 1:
-                # Find all common string beginnings for all files in file_paths
-                common_prefix = min(file_paths, key=len)
-            else:
-                keepSourceFileLocation = KEEP_SOURCE_FILE_LOCATION_ENUM.FILE_ONLY # File only
-
         for file_path in file_paths:
             with open(file_path, 'r', errors='ignore') as file:
                 for line in file:
                     line = line.rstrip('\n')
-                    rows.append({'File': file_path, DEFAULT_MESSAGE_COLUMN: line})
+                    # Normalize path separators for cross-platform compatibility
+                    normalized_file_path = file_path.replace("\\", "/")
+                    normalized_common_prefix = common_path_prefix.replace("\\", "/")
+                    
+                    if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH.value:
+                        visible_file_value = file_path
+                    elif keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.FILE_ONLY.value:
+                        visible_file_value = os.path.basename(file_path)
+                    elif common_path_prefix != "":
+                        # Remove common prefix and strip leading slashes
+                        visible_file_value = normalized_file_path.replace(normalized_common_prefix, "", 1).lstrip("/")
+                    else:
+                        visible_file_value = ""
+                    
+                    rows.append({
+                        'File': visible_file_value,
+                        DEFAULT_MESSAGE_COLUMN: line,
+                        'Original Messages': file_path
+                    })
         data = DataFrame(rows).reset_index(drop=True)
-        return [DataColumn(data[DEFAULT_MESSAGE_COLUMN]), MetadataColumn(data['File'])]
+        if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value:
+            return [DataColumn(data[DEFAULT_MESSAGE_COLUMN]), MetadataColumn(data['File'])]
+        return [DataColumn(data['File']), DataColumn(data[DEFAULT_MESSAGE_COLUMN])]

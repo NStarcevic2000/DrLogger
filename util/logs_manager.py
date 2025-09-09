@@ -17,6 +17,9 @@ class LogsManager():
 
     def update_data(self, new_data:list[COLUMN_TYPE]|COLUMN_TYPE):
         new_columns = new_data if isinstance(new_data, list) else [new_data]
+        if self.columns is None or self.columns == []:
+            self.columns = new_columns
+            return
         # Remove all previous columns with the same name as any of the new columns
         new_column_names = [col.name for col in new_columns]
         self.columns = [col for col in self.columns if col.name not in new_column_names]
@@ -24,8 +27,6 @@ class LogsManager():
         self.columns.extend(new_columns)
 
     def get_data(self, rows: int | None = None) -> DataFrame:
-        if self.cached_data is not None:
-            return self.cached_data
         cols = [col[:rows] for col in self.columns]
         return pd.concat(cols, axis=1)
 
@@ -36,7 +37,7 @@ class LogsManager():
         return pd.concat(visible_cols, axis=1)
 
     def get_metadata(self, rows: int | None = None) -> DataFrame:
-        metadata_cols = [col for col in self.columns if col.__class__ == MetadataColumn]
+        metadata_cols = [col[:rows] for col in self.columns if col.__class__ == MetadataColumn]
         if not metadata_cols:
             return pd.DataFrame()
         return pd.concat(metadata_cols, axis=1)
