@@ -58,3 +58,27 @@ class LogsManager():
             print(f"Applying post_process for column: {col.name}")
             visible_data, metadata = col.post_process(visible_data, metadata)
         return visible_data, metadata
+
+    # For testing purposes, we might use it somewhere else also
+    def simulate_rendered_data_for_cols(self, cols: list[COLUMN_TYPE]|None, rows: int | None = None) -> DataFrame:
+        ret_df = DataFrame()
+        if cols is None or len(cols) == 0:
+            return DataFrame()
+        # Collect all DataColumn names to preserve columns even if empty
+        data_col_names = [col.name for col in cols if col.__class__ == DataColumn]
+        for col in [col for col in cols if col.__class__ == DataColumn]:
+            if col.name in ret_df.columns:
+                raise ValueError(f"Duplicate column name detected: {col.name}")
+            ret_df[col.name] = col
+        for col in [col for col in cols if col.__class__ == CollapsingRowsColumn]:
+            ret_df, _ = col.post_process(ret_df, DataFrame())
+        # Remove all empty rows, but preserve columns
+        ret_df.replace("", pd.NA, inplace=True)
+        ret_df.dropna(how='all', inplace=True)
+        # Ensure columns are present even if DataFrame is empty
+        for col_name in data_col_names:
+            if col_name not in ret_df.columns:
+                ret_df[col_name] = pd.Series(dtype="object")
+        ret_df = ret_df[data_col_names]  # preserve column order
+        ret_df.reset_index(drop=True, inplace=True)
+        return ret_df[:rows] if rows is not None else ret_df

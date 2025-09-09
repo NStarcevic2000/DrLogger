@@ -37,6 +37,9 @@ class ProcessorManager:
             try:
                 input_data = LogsManager().get_visible_data() if processor != self.processors[0] else CfgMan().get(CfgMan().r.open_logs.log_files)
                 returned_columns = processor.process(input_data)
+                if returned_columns is None:
+                    print(f"Processor {processor.__class__.__name__} returned None, skipping update.")
+                    continue
                 if returned_columns is not None:
                     LogsManager().update_data(returned_columns)
             except Exception as e:

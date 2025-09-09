@@ -65,6 +65,8 @@ class OpenLogsProcessor(IProcessor):
                         'Original Messages': file_path
                     })
         data = DataFrame(rows).reset_index(drop=True)
+        if DEFAULT_MESSAGE_COLUMN not in data.columns:
+            return None
         if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value:
             return [DataColumn(data[DEFAULT_MESSAGE_COLUMN]), MetadataColumn(data['File'])]
         return [DataColumn(data['File']), DataColumn(data[DEFAULT_MESSAGE_COLUMN])]

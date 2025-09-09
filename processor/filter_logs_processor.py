@@ -1,4 +1,4 @@
-from processor.processor_intf import IProcessor, DEFAULT_MESSAGE_COLUMN, DataColumn, CollapsingRowsColumn
+from processor.processor_intf import ANY_COLUMN_TYPE, IProcessor, DEFAULT_MESSAGE_COLUMN, DataColumn, CollapsingRowsColumn
 
 from pandas import DataFrame, Series
 from enum import Enum
@@ -24,7 +24,7 @@ class FilterLogsProcessor(IProcessor):
                 filter_pattern_arg:list|None=None,
                 contextualize_lines_count_arg:int|None=None,
                 contextualize_lines_type_arg:CONTEXTUALIZE_LINES_ENUM|None=None,
-                keep_hidden_logs_arg:bool|None=None) -> DataFrame:
+                keep_hidden_logs_arg:bool|None=None) -> list[ANY_COLUMN_TYPE]|None:
         if not isinstance(data, DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
         if data.empty:

@@ -4,25 +4,13 @@ from enum import Enum
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 
-from util.config_store import ConfigStore, Config
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
-from processor.filter_logs_processor import FilterLogsProcess
+from processor.filter_logs_processor import FilterLogsProcessor
+from util.logs_manager import LogsManager
 
-class TestFilterLogsProcess(unittest.TestCase):
+class TestFilterLogsProcessor(unittest.TestCase):
     def setUp(self):
-        # self.cs = ConfigStore("sample_config_store",
-        #     ConfigStore("filter_logs",
-        #         Config("filter_enabled", True, type_of=bool),
-        #         Config("filter_pattern", [], type_of=list, element_type=str),
-        #         Config("contextualize_lines", CONTEXTUALIZE_LINES_ENUM, type_of=Enum),
-        #         Config("contextualize_lines_count", 5, type_of=int),
-        #         Config("keep_hidden_logs", True, type_of=bool),
-        #     )
-        # )
-        # For testing, we can set the keep_hidden_logs to False
-        # to ensure we are testing the filtering logic
-        # self.cs.set(self.cs.r.filter_logs.keep_hidden_logs, False)
-        self.processor = FilterLogsProcess()
+        self.processor = FilterLogsProcessor()
 
     def test_process_invalid_input(self):
         # Test with non-DataFrame input
@@ -43,13 +31,14 @@ class TestFilterLogsProcess(unittest.TestCase):
     def test_process_basic_filtering(self):
         # Test basic pattern filtering
         input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
-        result_df = self.processor.process(input_df,
-            filter_pattern_arg=[["Message", "error"]],
-            contextualize_lines_count_arg=0,
-            contextualize_lines_type_arg= CONTEXTUALIZE_LINES_ENUM.NONE,
-            keep_hidden_logs_arg=False
+        result_df = LogsManager().simulate_rendered_data_for_cols(
+            self.processor.process(input_df,
+                filter_pattern_arg=[["Message", "error"]],
+                contextualize_lines_count_arg=0,
+                contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER,
+                keep_hidden_logs_arg=False
+            )
         )
-        
         expected_df = DataFrame({'Message': ['error occurred']})
         try:
             assert_frame_equal(result_df.reset_index(drop=True), expected_df)
@@ -62,11 +51,13 @@ class TestFilterLogsProcess(unittest.TestCase):
     def test_process_with_contextualization(self):
         # Test contextualization of filtered lines
         input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
-        result_df = self.processor.process(input_df,
-            filter_pattern_arg=[["Message", "error"]],
-            contextualize_lines_count_arg=1,
-            contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER,
-            keep_hidden_logs_arg=False
+        result_df = LogsManager().simulate_rendered_data_for_cols(
+            self.processor.process(input_df,
+                filter_pattern_arg=[["Message", "error"]],
+                contextualize_lines_count_arg=1,
+                contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER,
+                keep_hidden_logs_arg=False
+            )
         )
         expected_df = DataFrame({
             'Message': ['info message', 'error occurred', 'debug info'],
@@ -74,11 +65,13 @@ class TestFilterLogsProcess(unittest.TestCase):
         assert_frame_equal(result_df.reset_index(drop=True), expected_df)
 
         input_df = DataFrame({'Message': ['line1', 'line2', 'error occurred', 'line4', 'line5']})
-        result_df = self.processor.process(input_df,
-            filter_pattern_arg=[["Message", "error"]],
-            contextualize_lines_count_arg=1,
-            contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER,
-            keep_hidden_logs_arg=False
+        result_df = LogsManager().simulate_rendered_data_for_cols(
+            self.processor.process(input_df,
+                filter_pattern_arg=[["Message", "error"]],
+                contextualize_lines_count_arg=1,
+                contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER,
+                keep_hidden_logs_arg=False
+            )
         )
         expected_df = DataFrame({
             'Message': ['line2', 'error occurred', 'line4'],
@@ -105,11 +98,13 @@ class TestFilterLogsProcess(unittest.TestCase):
             'Message': ['line1 error', 'line2 warning', 'line3 info', 'line4 error'],
             'Type': ['line1 type1', 'line2 type2', 'line3 type3', 'line4 type4']
         }).reset_index(drop=True)
-        result_df = self.processor.process(input_df,
-            filter_pattern_arg=[["Message", "warning"], ["Type", "type3"]],
-            contextualize_lines_count_arg=0,
-            contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
-            keep_hidden_logs_arg=False
+        result_df = LogsManager().simulate_rendered_data_for_cols(
+            self.processor.process(input_df,
+                filter_pattern_arg=[["Message", "warning"], ["Type", "type3"]],
+                contextualize_lines_count_arg=0,
+                contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
+                keep_hidden_logs_arg=False
+            )
         ).reset_index(drop=True)
         expected_df = DataFrame({
             'Message': ['line2 warning', 'line3 info'],
@@ -128,11 +123,13 @@ class TestFilterLogsProcess(unittest.TestCase):
     def test_process_empty_dataframe(self):
         # Test with empty DataFrame
         input_df = DataFrame({'Message': []})
-        result_df = self.processor.process(input_df,
-            filter_pattern_arg=[["Message", "error"]],
-            contextualize_lines_count_arg=0,
-            contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
-            keep_hidden_logs_arg=False
+        result_df = LogsManager().simulate_rendered_data_for_cols(
+            self.processor.process(input_df,
+                filter_pattern_arg=[["Message", "error"]],
+                contextualize_lines_count_arg=0,
+                contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
+                keep_hidden_logs_arg=False
+            )
         )
         expected_df = DataFrame({'Message': []})
         assert_frame_equal(result_df, expected_df)
@@ -142,11 +139,13 @@ class TestFilterLogsProcess(unittest.TestCase):
     def test_process_skip_empty_patterns(self):
         # Test skipping empty patterns
         input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
-        result_df = self.processor.process(input_df,
-            filter_pattern_arg=[["", ""], ["Message", "error"]],
-            contextualize_lines_count_arg=0,
-            contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
-            keep_hidden_logs_arg=False
+        result_df = LogsManager().simulate_rendered_data_for_cols(
+            self.processor.process(input_df,
+                filter_pattern_arg=[["", ""], ["Message", "error"]],
+                contextualize_lines_count_arg=0,
+                contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
+                keep_hidden_logs_arg=False
+            )
         )
         expected_df = DataFrame({'Message': ['error occurred']})
         try:
@@ -162,11 +161,13 @@ class TestFilterLogsProcess(unittest.TestCase):
     def test_process_default_message_column(self):
         # Test using default Message column when pattern_column is empty
         input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
-        result_df = self.processor.process(input_df,
-            filter_pattern_arg=[["", "error"]],
-            contextualize_lines_count_arg=0,
-            contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
-            keep_hidden_logs_arg=False
+        result_df = LogsManager().simulate_rendered_data_for_cols(
+            self.processor.process(input_df,
+                filter_pattern_arg=[["", "error"]],
+                contextualize_lines_count_arg=0,
+                contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
+                keep_hidden_logs_arg=False
+            )
         )
         expected_df = DataFrame({'Message': ['error occurred']})
         try:
