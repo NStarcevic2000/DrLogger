@@ -80,28 +80,5 @@ class FilterLogsProcessor(IProcessor):
                     end = min(idx + contextualize_lines_count, data.index[-1])
                 mask.loc[start:end] = True
             data["show"] = mask
-        
-        # Replace consecutive hidden rows with a single marker row, but do not remove any rows
-        hidden_count = 0
-        if keep_hidden_logs_arg is not None:
-            keep_hidden_logs = keep_hidden_logs_arg
-        else:
-            keep_hidden_logs = CfgMan().get(CfgMan().r.filter_logs.keep_hidden_logs, False)
-        if keep_hidden_logs:
-            for i in range(len(data)):
-                if not data.iloc[i]["show"]:
-                    hidden_count += 1
-                    # If next row is shown or end of data, mark this row
-                    if i + 1 == len(data) or data.iloc[i + 1]["show"]:
-                        data.at[i, "show"] = True
-                        # All other columns should be set to empty
-                        for col in data.columns:
-                            if col != "show":
-                                data.at[i, col] = ""
-                        row_word = "row" if hidden_count == 1 else "rows"
-                        data.at[i, DEFAULT_MESSAGE_COLUMN] = f"< filtered {hidden_count} {row_word} >"
-                        hidden_count = 0
-                else:
-                    hidden_count = 0
-        # data = data[data["show"]].drop(columns=["show"], errors='ignore')
-        return [CollapsingRowsColumn(data["show"]), DataColumn(data[DEFAULT_MESSAGE_COLUMN])]
+
+        return [CollapsingRowsColumn(data["show"])]

@@ -12,12 +12,10 @@ from processor.processor_manager import ProcessorManager
 class LogsTableModel(QAbstractTableModel):
     def __init__(self,
                  visible_data: DataFrame,
-                 metadata: DataFrame,
-                 collapsing_rows: DataFrame):
+                 metadata: DataFrame):
         super().__init__()
         self._visible_data = visible_data
         self._metadata = metadata
-        self._collapsing_rows = collapsing_rows
 
         self._collapsing_root_element = None
 
@@ -59,7 +57,7 @@ class RenderedLogsTable(QTableView):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSortingEnabled(False)
-        self.setModel(LogsTableModel(DataFrame(), DataFrame(), DataFrame()))
+        self.setModel(LogsTableModel(DataFrame(), DataFrame()))
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.horizontalHeader().setStretchLastSection(True)
 
@@ -68,9 +66,7 @@ class RenderedLogsTable(QTableView):
         self.setUpdatesEnabled(False)
         self.setModel(
             LogsTableModel(
-                LogsManager().get_visible_data(rows=preview_lines),
-                LogsManager().get_metadata(rows=preview_lines),
-                LogsManager().get_collapsing_rows(rows=preview_lines)
+                *LogsManager().get_rendered_data(rows=preview_lines)
             )
         )
         self.resizeColumnsToContents()
