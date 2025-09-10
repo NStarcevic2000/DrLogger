@@ -30,10 +30,6 @@ class TestFilterLogsProcessor(unittest.TestCase):
             visible_df=input_df.copy()
         )
         expected_df = DataFrame({'Message': ['line1', 'line2', 'line3']})
-        print("Result DF:")
-        print(result_df)
-        print("Expected DF:")
-        print(expected_df)
         assert_frame_equal(result_df, expected_df)
 
     def test_process_basic_filtering(self):

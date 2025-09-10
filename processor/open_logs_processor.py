@@ -46,10 +46,10 @@ class OpenLogsProcessor(IProcessor):
                 common_path_prefix = os.path.commonpath(file_paths)
         rows = []
         for file_path in file_paths:
-            with open(file_path, 'r', errors='ignore') as file:
+            with open(file_path, 'r', errors='ignore', encoding='utf-8') as file:
                 for line in file:
-                    line = line.rstrip('\n')
-
+                    # Strip any line ending whitespace/newline characters
+                    line = line.rstrip()
                     if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH:
                         visible_file_value = file_path
                     elif keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.FILE_ONLY:
