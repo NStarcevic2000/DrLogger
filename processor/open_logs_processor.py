@@ -31,31 +31,31 @@ class OpenLogsProcessor(IProcessor):
             file_paths.extend(data['file_path'].tolist())
 
         if keep_source_file_location_arg is not None:
-            keepSourceFileLocation = keep_source_file_location_arg
+            keepSourceFileLocation = keep_source_file_location_arg.value
         else:
             keepSourceFileLocation = CfgMan().get(CfgMan().r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value)
+        keepSourceFileLocation = KEEP_SOURCE_FILE_LOCATION_ENUM(keepSourceFileLocation)
 
         common_path_prefix = ""
-        if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value: # No prefix to remove
+        if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.NONE: # No prefix to remove
             common_path_prefix = ""
-        elif keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH.value: # Remove common path prefix
-            common_path_prefix = os.path.commonpath(file_paths)
+        elif keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH: # Remove common path prefix
+            if len(file_paths) == 1:
+                common_path_prefix = os.path.dirname(file_paths[0])
+            else:
+                common_path_prefix = os.path.commonpath(file_paths)
         rows = []
         for file_path in file_paths:
             with open(file_path, 'r', errors='ignore') as file:
                 for line in file:
                     line = line.rstrip('\n')
-                    # Normalize path separators for cross-platform compatibility
-                    normalized_file_path = file_path.replace("\\", "/")
-                    normalized_common_prefix = common_path_prefix.replace("\\", "/")
-                    
-                    if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH.value:
+
+                    if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH:
                         visible_file_value = file_path
-                    elif keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.FILE_ONLY.value:
+                    elif keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.FILE_ONLY:
                         visible_file_value = os.path.basename(file_path)
-                    elif common_path_prefix != "":
-                        # Remove common prefix and strip leading slashes
-                        visible_file_value = normalized_file_path.replace(normalized_common_prefix, "", 1).lstrip("/")
+                    elif keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH:
+                        visible_file_value = file_path.replace(common_path_prefix, "", 1).replace("\\", "/").lstrip("/")
                     else:
                         visible_file_value = ""
                     

@@ -90,4 +90,7 @@ class SplitLogLinesProcessor(IProcessor):
         else:
             data[DEFAULT_MESSAGE_COLUMN] = data[DEFAULT_MESSAGE_COLUMN]
 
-        return ([DataColumn(data[col]) for col in data.columns if col != DEFAULT_MESSAGE_COLUMN] + [DataColumn(data[DEFAULT_MESSAGE_COLUMN])])
+        return (\
+            [DataColumn(data[col]) for col in data.columns if col != DEFAULT_MESSAGE_COLUMN] + \
+            [DataColumn(data[DEFAULT_MESSAGE_COLUMN])] \
+        )

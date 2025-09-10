@@ -20,44 +20,48 @@ class TestFilterLogsProcessor(unittest.TestCase):
     def test_process_no_filter_patterns(self):
         # Test when no filter patterns are provided
         input_df = DataFrame({'Message': ['line1', 'line2', 'line3']})
-        result_df = self.processor.process(input_df,
-            filter_pattern_arg=[],
-            contextualize_lines_count_arg=0,
-            contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE.value,
-            keep_hidden_logs_arg=False
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
+                filter_pattern_arg=[],
+                contextualize_lines_count_arg=0,
+                contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
+                keep_hidden_logs_arg=False
+            ),
+            visible_df=input_df.copy()
         )
-        assert_frame_equal(result_df, input_df)
+        expected_df = DataFrame({'Message': ['line1', 'line2', 'line3']})
+        print("Result DF:")
+        print(result_df)
+        print("Expected DF:")
+        print(expected_df)
+        assert_frame_equal(result_df, expected_df)
 
     def test_process_basic_filtering(self):
         # Test basic pattern filtering
         input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
-        result_df = LogsManager().simulate_rendered_data_for_cols(
-            self.processor.process(input_df,
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
                 filter_pattern_arg=[["Message", "error"]],
                 contextualize_lines_count_arg=0,
                 contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER,
                 keep_hidden_logs_arg=False
-            )
+            ),
+            visible_df=input_df.copy()
         )
         expected_df = DataFrame({'Message': ['error occurred']})
-        try:
-            assert_frame_equal(result_df.reset_index(drop=True), expected_df)
-        except AssertionError as e:
-            print("Assertion failed:", e)
-            print("Result DataFrame:\n", result_df)
-            print("Expected DataFrame:\n", expected_df)
-            raise
+        assert_frame_equal(result_df.reset_index(drop=True), expected_df)
 
     def test_process_with_contextualization(self):
         # Test contextualization of filtered lines
         input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
-        result_df = LogsManager().simulate_rendered_data_for_cols(
-            self.processor.process(input_df,
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
                 filter_pattern_arg=[["Message", "error"]],
                 contextualize_lines_count_arg=1,
                 contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER,
                 keep_hidden_logs_arg=False
-            )
+            ),
+            visible_df=input_df.copy()
         )
         expected_df = DataFrame({
             'Message': ['info message', 'error occurred', 'debug info'],
@@ -65,13 +69,14 @@ class TestFilterLogsProcessor(unittest.TestCase):
         assert_frame_equal(result_df.reset_index(drop=True), expected_df)
 
         input_df = DataFrame({'Message': ['line1', 'line2', 'error occurred', 'line4', 'line5']})
-        result_df = LogsManager().simulate_rendered_data_for_cols(
-            self.processor.process(input_df,
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
                 filter_pattern_arg=[["Message", "error"]],
                 contextualize_lines_count_arg=1,
                 contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER,
                 keep_hidden_logs_arg=False
-            )
+            ),
+            visible_df=input_df.copy()
         )
         expected_df = DataFrame({
             'Message': ['line2', 'error occurred', 'line4'],
@@ -80,11 +85,14 @@ class TestFilterLogsProcessor(unittest.TestCase):
 
         # With 0, it will behave as a type specified NONE = Only filtered lines are kept, no context
         input_df = DataFrame({'Message': ['line1', 'line2', 'error occurred', 'line4', 'line5']})
-        result_df = self.processor.process(input_df,
-            filter_pattern_arg=[["Message", "error"]],
-            contextualize_lines_count_arg=0,
-            contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER,
-            keep_hidden_logs_arg=False
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
+                filter_pattern_arg=[["Message", "error"]],
+                contextualize_lines_count_arg=0,
+                contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER,
+                keep_hidden_logs_arg=False
+            ),
+            visible_df=input_df.copy()
         )
         expected_df = DataFrame({
             'Message': ['error occurred'],
@@ -98,40 +106,38 @@ class TestFilterLogsProcessor(unittest.TestCase):
             'Message': ['line1 error', 'line2 warning', 'line3 info', 'line4 error'],
             'Type': ['line1 type1', 'line2 type2', 'line3 type3', 'line4 type4']
         }).reset_index(drop=True)
-        result_df = LogsManager().simulate_rendered_data_for_cols(
-            self.processor.process(input_df,
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
                 filter_pattern_arg=[["Message", "warning"], ["Type", "type3"]],
                 contextualize_lines_count_arg=0,
                 contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
                 keep_hidden_logs_arg=False
-            )
+            ),
+            visible_df=input_df.copy()
         ).reset_index(drop=True)
         expected_df = DataFrame({
             'Message': ['line2 warning', 'line3 info'],
             'Type': ['line2 type2', 'line3 type3']
         }).reset_index(drop=True)
-        try:
-            assert_frame_equal(result_df, expected_df)
-        except AssertionError as e:
-            print("Assertion failed:", e)
-            print("Result DataFrame:\n", result_df)
-            print("Expected DataFrame:\n", expected_df)
-            raise
+
+        assert_frame_equal(result_df, expected_df)
 
 
 
     def test_process_empty_dataframe(self):
         # Test with empty DataFrame
         input_df = DataFrame({'Message': []})
-        result_df = LogsManager().simulate_rendered_data_for_cols(
-            self.processor.process(input_df,
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
                 filter_pattern_arg=[["Message", "error"]],
                 contextualize_lines_count_arg=0,
                 contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
                 keep_hidden_logs_arg=False
-            )
+            ),
+            visible_df=input_df.copy()
         )
         expected_df = DataFrame({'Message': []})
+
         assert_frame_equal(result_df, expected_df)
 
 
@@ -139,41 +145,33 @@ class TestFilterLogsProcessor(unittest.TestCase):
     def test_process_skip_empty_patterns(self):
         # Test skipping empty patterns
         input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
-        result_df = LogsManager().simulate_rendered_data_for_cols(
-            self.processor.process(input_df,
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
                 filter_pattern_arg=[["", ""], ["Message", "error"]],
                 contextualize_lines_count_arg=0,
                 contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
                 keep_hidden_logs_arg=False
-            )
+            ),
+            visible_df=input_df.copy()
         )
         expected_df = DataFrame({'Message': ['error occurred']})
-        try:
-            assert_frame_equal(result_df.reset_index(drop=True), expected_df)
-        except AssertionError as e:
-            print("Assertion failed:", e)
-            print("Result DataFrame:\n", result_df)
-            print("Expected DataFrame:\n", expected_df)
-            raise
+    
+        assert_frame_equal(result_df.reset_index(drop=True), expected_df)
 
-
+        
 
     def test_process_default_message_column(self):
         # Test using default Message column when pattern_column is empty
         input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
-        result_df = LogsManager().simulate_rendered_data_for_cols(
-            self.processor.process(input_df,
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
                 filter_pattern_arg=[["", "error"]],
                 contextualize_lines_count_arg=0,
                 contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE,
                 keep_hidden_logs_arg=False
-            )
+            ),
+            visible_df=input_df.copy()
         )
         expected_df = DataFrame({'Message': ['error occurred']})
-        try:
-            assert_frame_equal(result_df.reset_index(drop=True), expected_df)
-        except AssertionError as e:
-            print("Assertion failed:", e)
-            print("Result DataFrame:\n", result_df)
-            print("Expected DataFrame:\n", expected_df)
-            raise
+        
+        assert_frame_equal(result_df.reset_index(drop=True), expected_df)

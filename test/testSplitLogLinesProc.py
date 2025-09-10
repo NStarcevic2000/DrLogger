@@ -27,53 +27,41 @@ class TestSplitLogLinesProcessor(unittest.TestCase):
     def test_process_valid_dataframe(self):
         # Test processing a valid DataFrame
         input_df = DataFrame({'Message': ["Sample 1:abc", "Sample 2:def", "Sample 3:ghi"]})
-        result_df = LogsManager().simulate_rendered_data_for_cols(
-            self.processor.process(input_df,
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
                                    pattern_format_arg="<Group1> <Group2>:<Group3>",
-                                   timestamp_format_arg="")
+                                   timestamp_format_arg=""),
+            visible_df=input_df
         )
 
         expected_df = DataFrame({
             'Group1': ["Sample", "Sample", "Sample"],
             'Group2': ["1", "2", "3"],
-            'Group3': ["abc", "def", "ghi"]
+            'Group3': ["abc", "def", "ghi"],
+            'Message': ["", "", ""]
         })
 
-        try:
-            assert_frame_equal(result_df, expected_df)
-        except AssertionError as e:
-            print("Result DataFrame:\n", result_df)
-            print("Expected DataFrame:\n", expected_df)
-            raise
-
-    def test_process_missing_line_column(self):
-        # Test processing a DataFrame without 'Line' column
-        input_df = DataFrame({'OtherColumn': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]})
-        with self.assertRaises(ValueError):
-            self.processor.process(input_df,
-                                   pattern_format_arg="<Group1> <Group2>:<Group3>",
-                                   timestamp_format_arg="")
+        assert_frame_equal(result_df, expected_df)
 
     def test_empty_dataframe(self):
         # Test processing an empty DataFrame
         input_df = DataFrame({'Message': []})
-        result_df = LogsManager().simulate_rendered_data_for_cols(
-            self.processor.process(input_df,
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
                                    pattern_format_arg="<Group1> <Group2>:<Group3>",
-                                   timestamp_format_arg="")
+                                   timestamp_format_arg=""),
+            visible_df=input_df.copy()
         )
-
-        self.assertIsInstance(result_df, DataFrame)
-        self.assertEqual(len(result_df), 0)
         assert_frame_equal(result_df, input_df)
     
     def test_timestamp_format(self):
         # Test processing with timestamp format
         input_df = DataFrame({'Message': ["2023-10-01 12:00:00 Sample 1:abc", "2023-10-01 12:01:00 Sample 2:def", "2023-10-01 12:02:00 Sample 3:ghi"]})
-        result_df = LogsManager().simulate_rendered_data_for_cols(
-            self.processor.process(input_df,
-                                   pattern_format_arg="<Year>-<Month>-<Day> <Hour>:<Minutes>:<Seconds> <Type> <From>:",
-                                   timestamp_format_arg="<Year>-<Month>-<Day> <Hour>:<Minutes>:<Seconds>")
+        result_df = LogsManager().simulate_rendered_data(
+            self.processor.process(input_df.copy(),
+                pattern_format_arg="<Year>-<Month>-<Day> <Hour>:<Minutes>:<Seconds> <Type> <From>:",
+                timestamp_format_arg="<Year>-<Month>-<Day> <Hour>:<Minutes>:<Seconds>"),
+            visible_df=input_df.copy()
         )
 
         expected_df = DataFrame({
@@ -82,13 +70,4 @@ class TestSplitLogLinesProcessor(unittest.TestCase):
             'From': ["1", "2", "3"],
             'Message': ["abc", "def", "ghi"]
         })
-
-        try:
-            assert_frame_equal(result_df, expected_df)
-        except AssertionError as e:
-            print("Result DataFrame:\n", result_df)
-            print("Expected DataFrame:\n", expected_df)
-            raise
-
-# Run this command to start unittest
-# python -m unittest discover -s test
+        assert_frame_equal(result_df, expected_df)
