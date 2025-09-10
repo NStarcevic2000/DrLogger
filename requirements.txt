@@ -1,0 +1,3 @@
+# Python requirements for DrLogger application
+pandas>=1.3.0
+PyQt5>=5.15.0
