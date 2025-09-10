@@ -53,13 +53,12 @@ class DrLogMainWindow(QMainWindow):
         self.addToolBar(Qt.TopToolBarArea, self.toolbar)
         self.toolbar.setMovable(False)
 
-        self.main_table = QTableWidget()
-        self.main_table.setColumnCount(1)
-        self.main_table.setHorizontalHeaderLabels(["Logs"])
-        self.main_table.setRowCount(0)
-        header = self.main_table.horizontalHeader()
-        header.setSectionResizeMode(0, header.ResizeToContents)
-        header.setStretchLastSection(True)
+        self.find_toolbar = FindToolbar(self)
+        QShortcut(QKeySequence("Ctrl+F"), self, self.find_toolbar.toggle_visibility)
+        self.addToolBarBreak(Qt.TopToolBarArea)
+        self.addToolBar(Qt.TopToolBarArea, self.find_toolbar)
+
+        self.main_table = RenderedLogsTable()
 
         self.setCentralWidget(self.main_table)
         self.set_table_font(self.font_size)
