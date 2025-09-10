@@ -8,31 +8,29 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButt
 from PyQt5.QtCore import Qt
 
 class EditorPrompt(QDialog):
-    def __init__(self, configStore=None, pipeline=None, on_run_cmd=None):
+    def __init__(self=None, on_run_cmd=None):
         super().__init__()
         self.setWindowTitle("Editor Prompt")
         self.setGeometry(100, 100, 800, 600)
         self.layout = QVBoxLayout(self)
         self.layout.setAlignment(Qt.AlignTop)
-        self.cs = configStore
-        self.pipeline = pipeline
 
         self.on_run_cmd = on_run_cmd
 
         # A horizontal box with horizontally aligned updatable label,
         # A "Browse" button, and a "Save" button, stuck to the top
-        self.open_files_section = OpenFilesSection(self, self.cs, self.pipeline, self.update)
+        self.open_files_section = OpenFilesSection(self, self.update)
         self.open_files_section.setAlignment(Qt.AlignTop)
         self.layout.addLayout(self.open_files_section)
 
-        self.process_logs_section = ProcessLogsSection(self, self.cs, self.pipeline, self.update)
+        self.process_logs_section = ProcessLogsSection(self, self.update)
         self.process_logs_section.setAlignment(Qt.AlignTop)
         self.layout.addLayout(self.process_logs_section)
 
         hbox = QHBoxLayout()
         hbox.addStretch(1)
 
-        self.color_logs_section = ColorLogsSection(self, self.cs, self.pipeline, self.update)
+        self.color_logs_section = ColorLogsSection(self, self.update)
         self.color_logs_section.setAlignment(Qt.AlignTop)
         hbox.addLayout(self.color_logs_section)
 
@@ -41,13 +39,13 @@ class EditorPrompt(QDialog):
         separator.setFrameShadow(QFrame.Sunken)
         hbox.addWidget(separator)
 
-        self.filter_logs_section = FilterLogsSection(self, self.cs, self.pipeline, self.update)
+        self.filter_logs_section = FilterLogsSection(self, self.update)
         self.filter_logs_section.setAlignment(Qt.AlignTop)
         hbox.addLayout(self.filter_logs_section)
 
         self.layout.addLayout(hbox)
 
-        self.preview_logs_section = PreviewLogsSection(self, self.cs, self.pipeline)
+        self.preview_logs_section = PreviewLogsSection(self)
         self.layout.addLayout(self.preview_logs_section)
 
         self.save_button = QPushButton("Run")

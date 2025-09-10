@@ -2,20 +2,17 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QChec
 
 from PyQt5.QtCore import Qt
 
-from util.configStore import ConfigStore
-from configStoreImpl import KEEP_SOURCE_FILE_LOCATION_ENUM
+from util.config_store import ConfigManager as CfgMan
+from processor.processor_manager import ProcessorManager
+from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
 from gui.common.enum_config_entry import EnumConfigEntry
 
 class OpenFilesSection(QVBoxLayout):
     def __init__(self, parent,
-                 configStore:ConfigStore,
-                 pipeline=None,
                  call_update_cb=None):
         super().__init__()
-        self.cs = configStore
         self.parent = parent
-        self.pipeline = pipeline
         self.call_update_cb = call_update_cb
 
         self.label = QLabel()
@@ -32,12 +29,11 @@ class OpenFilesSection(QVBoxLayout):
 
         self.keep_source_files_column_selector = EnumConfigEntry(
             self,
-            self.cs,
             "Keep Source Files as Column:",
-            self.cs.r.open_logs.keep_source_file_location,
+            CfgMan().r.open_logs.keep_source_file_location,
             KEEP_SOURCE_FILE_LOCATION_ENUM.get_values()
         )
-
+        self.addLayout(self.keep_source_files_column_selector.container)
         self.setAlignment(Qt.AlignTop)
 
     def open_logs_cmd(self):
@@ -46,13 +42,13 @@ class OpenFilesSection(QVBoxLayout):
         options |= QFileDialog.ReadOnly
         files, _ = QFileDialog.getOpenFileNames(self.parent, "Select Log Files", "", "All Files (*)", options=options)
         if files:
-            self.cs.set(self.cs.r.open_logs.log_files, files)
+            CfgMan().set(CfgMan().r.open_logs.log_files, files)
         self.set_label()
-        self.pipeline.run()
+        ProcessorManager().run()
         self.call_update_cb()
     
     def set_label(self):
-        files = self.cs.get(self.cs.r.open_logs.log_files, [])
+        files = CfgMan().get(CfgMan().r.open_logs.log_files, [])
         format = "Open Logs: <span style='color: gray;'>{}</span>"
         if files:
             if len(files) == 1:

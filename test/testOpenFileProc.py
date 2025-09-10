@@ -1,26 +1,19 @@
+import os
 import tempfile
 import unittest
 
-from util.configStore import Config, ConfigStore
-from configStoreImpl import KEEP_SOURCE_FILE_LOCATION_ENUM
-
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
-
 from enum import Enum
 
-from processor.openLogsProc import OpenLogsProcess
+from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
+from processor.open_logs_processor import OpenLogsProcessor
+from util.logs_manager import LogsManager
 
-class TestOpenLogsProcess(unittest.TestCase):
+class TestOpenLogsProcessor(unittest.TestCase):
     def setUp(self):
-        self.cs = ConfigStore("sample_config_store", 
-            ConfigStore("open_logs",
-                Config("log_files", [], type_of=list, element_type=str),
-                Config("keep_source_file_location", KEEP_SOURCE_FILE_LOCATION_ENUM, type_of=Enum),
-            )
-        )
-        self.processor = OpenLogsProcess(self.cs)
+        self.processor = OpenLogsProcessor()
 
         # Create a temporary file with sample log data
         self.tmp_file = tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.log', encoding='utf-8')
@@ -36,13 +29,17 @@ class TestOpenLogsProcess(unittest.TestCase):
 
     def test_process_single_file(self):
         # Test processing a single file
-        self.cs.set(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH.value)  # Full Path
-        result_df = self.processor.process(self.tmp_file.name)
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(
+                data=self.tmp_file.name,
+                keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH
+            )
+        )
 
         self.assertIsInstance(result_df, DataFrame)
         self.assertEqual(len(result_df), 3)
         expected_df = DataFrame(
-            {'File': 3 * [self.tmp_file.name], 'Line': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]}
+            {'File': 3 * [self.tmp_file.name], 'Message': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]}
         )
         assert_frame_equal(result_df, expected_df)
 
@@ -53,54 +50,48 @@ class TestOpenLogsProcess(unittest.TestCase):
         tmp_file2.flush()
         tmp_file2.close()
 
-        self.cs.set(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.FILE_ONLY.value)
-        result_df = self.processor.process([self.tmp_file.name, tmp_file2.name])
-
-        self.assertIsInstance(result_df, DataFrame)
-        self.assertEqual(len(result_df), 5)
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(
+                data=[self.tmp_file.name, tmp_file2.name],
+                keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.FILE_ONLY
+            )
+        )
         expected_df = DataFrame(
             {
-                'File': 3 * [self.tmp_file.name] + 2 * [tmp_file2.name],
-                'Line': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi", "Sample 4 xyz", "Sample 5 mno"]
+                'File': 3 * [os.path.basename(self.tmp_file.name)] + 2 * [os.path.basename(tmp_file2.name)],
+                'Message': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi", "Sample 4 xyz", "Sample 5 mno"]
             }
         )
         assert_frame_equal(result_df, expected_df)
-
-        import os
         os.unlink(tmp_file2.name)
 
     def test_process_no_files(self):
         # Test processing with no files
-        self.cs.set(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value)  # None
-        result_df = self.processor.process([])
-
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(
+                data=[],
+                keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.NONE
+            )
+        )
         self.assertIsInstance(result_df, DataFrame)
         self.assertEqual(len(result_df), 0)
 
     def test_process_short_path(self):
         # Test processing with Short Path
-        self.cs.set(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH.value)  # Short Path
-        result_df = self.processor.process(self.tmp_file.name)
+        result_df =LogsManager().simulate_rendered_data(
+            self.processor.process(
+                data=self.tmp_file.name,
+                keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH
+            )
+        )
 
         self.assertIsInstance(result_df, DataFrame)
         self.assertEqual(len(result_df), 3)
-        expected_df = DataFrame(
-            {'File': 3 * [self.tmp_file.name.split('/')[-1]], 'Line': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]}
-        )
+        expected_df = DataFrame({
+            'File': 3 * [os.path.basename(self.tmp_file.name)],
+            'Message': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]
+        })
         assert_frame_equal(result_df, expected_df)
-
-    def test_read_cached_data(self):
-        self.cs.set(self.cs.r.open_logs.keep_source_file_location, KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH.value)  # Full Path
-        # Test reading cached data after processing
-        self.processor.process(self.tmp_file.name)
-        cached_data = self.processor.read_cached_data()
-
-        self.assertIsInstance(cached_data, DataFrame)
-        self.assertEqual(len(cached_data), 3)
-        expected_df = DataFrame(
-            {'File': 3 * [self.tmp_file.name], 'Line': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]}
-        )
-        assert_frame_equal(cached_data, expected_df)
 
 
 # Run this command to start unittest

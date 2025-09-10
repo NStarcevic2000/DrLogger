@@ -3,8 +3,8 @@ from PyQt5.QtWidgets import QComboBox, QCheckBox
 
 from PyQt5.QtCore import Qt
 
-from util.configStore import ConfigStore
-from configStoreImpl import CONTEXTUALIZE_LINES_ENUM
+from util.config_store import ConfigManager as CfgMan
+from util.config_enums import CONTEXTUALIZE_LINES_ENUM
 
 from gui.common.preset_selector import PresetSelector
 from gui.common.table_config_entry import TableConfigEntry, TABLE_EDIT_TYPE
@@ -13,11 +13,9 @@ from gui.common.string_config_entry import StringConfigEntry
 from gui.common.enum_config_entry import EnumConfigEntry
 
 class FilterLogsSection(QVBoxLayout):
-    def __init__(self, parent, configStore:ConfigStore, pipeline=None, call_update_cb=None):
+    def __init__(self, parent, call_update_cb=None):
         super().__init__()
-        self.cs = configStore
         self.parent = parent
-        self.pipeline = pipeline
         self.call_update_cb = call_update_cb
 
         # Add separator
@@ -28,7 +26,7 @@ class FilterLogsSection(QVBoxLayout):
 
         self.label = QLabel("Filter Logs:")
 
-        self.preset_selector = PresetSelector(self, self.cs, self.cs.r.filter_logs.name)
+        self.preset_selector = PresetSelector(self, CfgMan().r.filter_logs.name)
         self.preset_selector.container.setAlignment(Qt.AlignRight)
         
         hbox = QHBoxLayout()
@@ -39,8 +37,8 @@ class FilterLogsSection(QVBoxLayout):
         hbox = QHBoxLayout()
         self.filter_pattern_editor = TableConfigEntry(
             self,
-            self.cs,
-            self.cs.r.filter_logs.filter_pattern,
+            
+            CfgMan().r.filter_logs.filter_pattern,
             ["Column", "Pattern"],
             [TABLE_EDIT_TYPE.TEXT_EDIT, TABLE_EDIT_TYPE.TEXT_EDIT],
             column_width=150
@@ -51,24 +49,24 @@ class FilterLogsSection(QVBoxLayout):
         vbox.setAlignment(Qt.AlignTop)
         self.keep_hidden_logs = BoolConfigEntry(
             self,
-            self.cs,
+            
             "Keep Hidden Logs:",
-            self.cs.r.filter_logs.keep_hidden_logs
+            CfgMan().r.filter_logs.keep_hidden_logs
         )
         vbox.addLayout(self.keep_hidden_logs.container)
         self.contextualize_lines_count = StringConfigEntry(
             self,
-            self.cs,
+            
             "Contextualize Spread:",
-            self.cs.r.filter_logs.contextualize_lines_count,
+            CfgMan().r.filter_logs.contextualize_lines_count,
             assert_type=int
         )
         vbox.addLayout(self.contextualize_lines_count.container)
         self.contextualize_lines_type = EnumConfigEntry(
             self,
-            self.cs,
+            
             "Contextualize Type:",
-            self.cs.r.filter_logs.contextualize_lines,
+            CfgMan().r.filter_logs.contextualize_lines,
             CONTEXTUALIZE_LINES_ENUM.get_values()
         )
         vbox.addLayout(self.contextualize_lines_type.container)

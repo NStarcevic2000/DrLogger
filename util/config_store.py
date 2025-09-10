@@ -1,9 +1,12 @@
 from collections.abc import Callable
-from enum import Enum
 from types import SimpleNamespace
+from enum import Enum
 
+from util.singleton import singleton
 from util.fileStorageManager import FileStorageManager
 from util.presetsManager import PresetsManager
+
+
 
 class Config(dict):
     def __init__(self, name: str, value, type_of: type,
@@ -61,22 +64,35 @@ class Config(dict):
         else:
             raise ValueError(message)
 
-    
+
+
+
+
+
 class ConfigStore(dict):
-    def __init__(self, name: str, *args,
+    def __init__(self, name: str, *args: "ConfigStore | Config",
                  fsmanager: FileStorageManager = None,
                  presetsmanager: PresetsManager = None,
                  on_warning: Callable = None):
         self.name = name
+        self.r = SimpleNamespace()
+        self.fsmanager = fsmanager
+        self.register(*args)
+        self.on_warning = on_warning
+        self.pm = presetsmanager
+    
+    def register(self, *args: "ConfigStore | Config"):
         for arg in args:
             if isinstance(arg, ConfigStore) or isinstance(arg, Config):
+                if arg.name in self:
+                    # raise ValueError(f"ConfigStore or Config with name {arg.name} already exists in {self.name}...")
+                    return
                 self[arg.name] = arg
             else:
                 raise ValueError(f"Value for {arg} must be ConfigStore or Config, got {type(arg)}")
+        # Generate namespaces for easy access
         self.r = self.get_namespaces()
-        self.on_warning = on_warning
-
-        self.fsmanager = fsmanager
+        # Load config from file if fsmanager is provided
         if self.fsmanager:
             try:
                 loaded_data = self.fsmanager.read_from_file()
@@ -86,7 +102,7 @@ class ConfigStore(dict):
                     self.fsmanager.write_to_file(self)
             except Exception as e:
                 self.fsmanager.write_to_file(self)
-        self.pm = presetsmanager
+        return self
 
     def get(self, key: str, default=None):
         # Split the key into parts for nested lookup
@@ -216,3 +232,14 @@ class ConfigStore(dict):
         preset_data = self.pm.get_preset(name)
         if preset_data:
             self.overlay_dict(preset_data, keep_new_fields=False)
+
+
+
+
+
+@singleton
+class ConfigManager(ConfigStore):
+    def __init__(self):
+        super().__init__("ConfigManager",
+                         fsmanager=FileStorageManager(None, "session")
+        )

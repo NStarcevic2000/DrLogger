@@ -1,25 +1,22 @@
 import unittest
+
 import os
 import tempfile
+
 from util.fileStorageManager import FileStorageManager
 
 class TestFileStorageManager(unittest.TestCase):
     def setUp(self):
-        self.temp_dir = "test_dir"
+        self.temp_dir = tempfile.mkdtemp()
         self.filename = "test_file"
-        # Ensure the test directory is clean before each test
-        if os.path.exists(self.temp_dir):
-            for f in os.listdir(self.temp_dir):
-                os.remove(os.path.join(self.temp_dir, f))
-            os.rmdir(self.temp_dir)
         self.manager = FileStorageManager(dir=self.temp_dir, filename=self.filename)
 
     def tearDown(self):
         # Remove the directory
-        if os.path.exists(self.manager.dir):
-            for f in os.listdir(self.manager.dir):
-                os.remove(os.path.join(self.manager.dir, f))
-            os.rmdir(self.manager.dir)
+        if os.path.exists(self.temp_dir):
+            for f in os.listdir(self.temp_dir):
+                os.remove(os.path.join(self.temp_dir, f))
+            os.rmdir(self.temp_dir)
 
     def test_init_cache_dir(self):
         cache_dir = self.manager.init_cache_dir()

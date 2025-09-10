@@ -3,17 +3,15 @@ from PyQt5.QtGui import QColor
 
 from PyQt5.QtCore import Qt
 
-from util.configStore import ConfigStore
+from util.config_store import ConfigManager as CfgMan
 from gui.common.preset_selector import PresetSelector
 from gui.common.table_config_entry import TableConfigEntry, TABLE_EDIT_TYPE
 from gui.common.bool_config_entry import BoolConfigEntry
 
 class ColorLogsSection(QVBoxLayout):
-    def __init__(self, parent, configStore:ConfigStore, pipeline=None, call_update_cb=None):
+    def __init__(self, parent, call_update_cb=None):
         super().__init__()
-        self.cs = configStore
         self.parent = parent
-        self.pipeline = pipeline
         self.call_update_cb = call_update_cb
 
         # Add separator
@@ -23,7 +21,7 @@ class ColorLogsSection(QVBoxLayout):
         self.addWidget(separator)
 
         self.label = QLabel("Color Logs:")
-        self.preset_selector = PresetSelector(self, self.cs, self.cs.r.color_logs.name)
+        self.preset_selector = PresetSelector(self, CfgMan().r.color_logs.name)
         self.preset_selector.container.setAlignment(Qt.AlignRight)
         
         hbox = QHBoxLayout()
@@ -34,8 +32,7 @@ class ColorLogsSection(QVBoxLayout):
         hbox = QHBoxLayout()
         self.color_pattern_editor = TableConfigEntry(
             self,
-            self.cs,
-            self.cs.r.color_logs.color_scheme,
+            CfgMan().r.color_logs.color_scheme,
             ["Column", "Pattern", "Foreground", "Background"],
             [TABLE_EDIT_TYPE.TEXT_EDIT, TABLE_EDIT_TYPE.TEXT_EDIT, TABLE_EDIT_TYPE.COLOR_PICKER, TABLE_EDIT_TYPE.COLOR_PICKER],
             column_width=100
@@ -46,9 +43,8 @@ class ColorLogsSection(QVBoxLayout):
         vbox.setAlignment(Qt.AlignTop)
         self.enable_coloring = BoolConfigEntry(
             self,
-            self.cs,
             "Enable Coloring:",
-            self.cs.r.color_logs.color_logs_enabled
+            CfgMan().r.color_logs.color_logs_enabled
         )
         vbox.addLayout(self.enable_coloring.container)
         vbox.addStretch(1)

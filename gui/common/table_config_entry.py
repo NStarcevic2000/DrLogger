@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 
 from enum import Enum
 
-from util.configStore import ConfigStore
+from util.config_store import ConfigManager as CfgMan
 from gui.common.config_entry_intf import IConfigEntry
 
 class TABLE_EDIT_TYPE(Enum):
@@ -14,13 +14,12 @@ class TABLE_EDIT_TYPE(Enum):
 class TableConfigEntry(IConfigEntry):
     def __init__(self,
                  parent,
-                 configStore: ConfigStore,
                  config_name: str,
                  column_headers: list[str],
                  edit_types: list[TABLE_EDIT_TYPE],
                  column_width:int|None=None):
         self.parent = parent
-        self.cs = configStore
+        
         self.config_name = config_name
         self.edit_types = edit_types
 
@@ -48,7 +47,7 @@ class TableConfigEntry(IConfigEntry):
 
     def update_content(self):
         self.table.blockSignals(True)
-        config_items = self.cs.get(self.config_name, [])
+        config_items = CfgMan().get(self.config_name, [])
         # Check the given data is a list of lists
         if not all(isinstance(item, list) for item in config_items):
             print(f"Invalid config data format: {config_items}")
@@ -97,6 +96,6 @@ class TableConfigEntry(IConfigEntry):
         ]
         # Remove empty rows
         data = [row for row in data if any(cell for cell in row)]
-        self.cs.set(self.config_name, data)
+        CfgMan().set(self.config_name, data)
         if self.parent and hasattr(self.parent, 'update_content'):
             self.parent.update_content()
