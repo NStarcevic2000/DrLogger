@@ -1,24 +1,28 @@
 PYTHON=python3
 SRC=init.py
-EXE=dist/DrLog.exe
+OUT=dist
+EXE=$(OUT)/DrLogger.exe
 TEST_DIR=test
 
-.PHONY: all build test clean
+.PHONY: all prep build run run-exec test clean
 
-all: build
+all: build run-exec
 
-build:
-	$(PYTHON) -m pip install --upgrade pip pyinstaller
-	$(PYTHON) -m PyInstaller --onefile $(SRC) --distpath dist
+prep: requirements.txt
+	$(PYTHON) -m pip install --upgrade pip
+	$(PYTHON) -m pip install -r requirements.txt
 
-run:
+build: prep $(EXE)
+	$(PYTHON) -m PyInstaller --onefile --noconsole --name DrLogger --add-data "resources;resources" $(SRC)
+
+run: prep
 	$(PYTHON) $(SRC)
 
-run-exec:
+run-exec: build $(EXE)
 	$(EXE)
 
-test:
+test: prep
 	$(PYTHON) -m unittest discover $(TEST_DIR)
 
 clean:
-	rm -rf build dist __pycache__ *.spec
+	del /Q /S $(OUT)
