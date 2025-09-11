@@ -15,6 +15,10 @@ from gui.editor.editorPrompt import EditorPrompt
 from gui.presetPrompt import PresetPrompt
 from gui.rendered_logs_table import RenderedLogsTable
 
+from gui.find_toolbar import FindToolbar
+from gui.footerNotebook import FooterNotebook
+from PyQt5.QtWidgets import QTabWidget
+
 class DrLogMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -38,6 +42,11 @@ class DrLogMainWindow(QMainWindow):
             "Presets": self.presets_prompt.show_updated,
         }
 
+        self.footer_notebook = FooterNotebook()
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.footer_notebook)
+
+        self.main_table = RenderedLogsTable()
+
         self.toolbar = QToolBar("Main Toolbar")
         for action_name, callback in toolbar_cb.items():
             action = QAction(action_name, self)
@@ -46,13 +55,20 @@ class DrLogMainWindow(QMainWindow):
         self.addToolBar(Qt.TopToolBarArea, self.toolbar)
         self.toolbar.setMovable(False)
 
-        self.main_table = RenderedLogsTable()
+        self.find_toolbar = FindToolbar(self, self.main_table)
+        QShortcut(QKeySequence("Ctrl+F"), self, self.find_toolbar.toggle_visibility)
+        self.addToolBarBreak(Qt.TopToolBarArea)
+        self.addToolBar(Qt.TopToolBarArea, self.find_toolbar)
 
         self.setCentralWidget(self.main_table)
         self.set_table_font(self.font_size)
 
         QShortcut(QKeySequence("Ctrl++"), self, self.increase_font_size)
         QShortcut(QKeySequence("Ctrl+-"), self, self.decrease_font_size)
+
+        QShortcut(QKeySequence(Qt.Key_Return), self, self.find_toolbar.find_next)
+
+        self.keyboard_shortcuts_stack = {}
 
     def set_table_font(self, size):
         font = QFont()
@@ -73,3 +89,15 @@ class DrLogMainWindow(QMainWindow):
     
     def update(self):
         self.main_table.refresh()
+
+    def set_QShortcut_action(self, button: str, action: callable):
+        shortcut = QShortcut(QKeySequence(button), self)
+        shortcut.activated.connect(action)
+        self.keyboard_shortcuts_stack[button] = shortcut
+
+    def remove_QShortcut_action(self, button: str):
+        if button in self.keyboard_shortcuts_stack:
+            shortcut = self.keyboard_shortcuts_stack.pop(button)
+            shortcut.activated.disconnect()
+            shortcut.setParent(None)
+            del shortcut
