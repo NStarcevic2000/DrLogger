@@ -3,7 +3,7 @@ from processor.processor_intf import IProcessor, MetadataColumn
 from pandas import DataFrame
 
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
-from util.presetsManager import PresetsManager
+from util.presets_manager import PresetsManager
 
 class ColorLogsProcessor(IProcessor):
     def register_config_store(self) -> ConfigStore|Config|None:

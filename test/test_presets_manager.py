@@ -4,7 +4,7 @@ import json
 import os
 import tempfile
 
-from util.presetsManager import PresetsManager
+from util.presets_manager import PresetsManager
 
 class TestPresetsManager(unittest.TestCase):
     def setUp(self):

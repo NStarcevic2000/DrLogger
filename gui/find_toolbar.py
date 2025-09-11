@@ -5,7 +5,7 @@ from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import Qt
 
 from gui.rendered_logs_table import RenderedLogsTable
-from gui.footerNotebook import FOOTER_PAGE, FooterNotebook
+from gui.footer_notebook import FOOTER_PAGE, FooterNotebook
 
 class FindToolbar(QToolBar):
     def __init__(self,

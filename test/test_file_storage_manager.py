@@ -3,7 +3,7 @@ import unittest
 import os
 import tempfile
 
-from util.fileStorageManager import FileStorageManager
+from util.file_storage_manager import FileStorageManager
 
 class TestFileStorageManager(unittest.TestCase):
     def setUp(self):

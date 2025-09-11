@@ -5,7 +5,7 @@ from enum import Enum
 
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
-from util.presetsManager import PresetsManager
+from util.presets_manager import PresetsManager
 
 
 class FilterLogsProcessor(IProcessor):

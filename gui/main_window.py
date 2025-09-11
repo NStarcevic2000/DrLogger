@@ -11,12 +11,12 @@ from util.config_store import ConfigManager as CfgMan
 from processor.processor_manager import ProcessorManager
 from util.logs_manager import LogsManager
 
-from gui.editor.editorPrompt import EditorPrompt
-from gui.presetPrompt import PresetPrompt
+from gui.editor.editor_prompt import EditorPrompt
+from gui.preset_prompt import PresetPrompt
 from gui.rendered_logs_table import RenderedLogsTable
 
 from gui.find_toolbar import FindToolbar
-from gui.footerNotebook import FooterNotebook
+from gui.footer_notebook import FooterNotebook
 from PyQt5.QtWidgets import QTabWidget
 
 class DrLogMainWindow(QMainWindow):

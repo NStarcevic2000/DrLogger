@@ -6,7 +6,7 @@ import re
 
 from processor.processor_intf import IProcessor, DEFAULT_MESSAGE_COLUMN, DataColumn
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
-from util.presetsManager import PresetsManager
+from util.presets_manager import PresetsManager
 
 class SplitLogLinesProcessor(IProcessor):
     def register_config_store(self) -> ConfigStore|Config|None:

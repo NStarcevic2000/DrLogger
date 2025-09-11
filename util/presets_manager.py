@@ -1,4 +1,4 @@
-from util.fileStorageManager import FileStorageManager
+from util.file_storage_manager import FileStorageManager
 
 
 class PresetsManager(FileStorageManager):
