@@ -3,7 +3,7 @@ import json
 
 class FileStorageManager:
     def __init__(self, dir: str | None, filename: str):
-        self.app_name = "DrLog"
+        self.app_name = "DrLogger"
         self.dir = self.init_cache_dir(dir)
         self.filename = filename + ".json" if filename else None
     
