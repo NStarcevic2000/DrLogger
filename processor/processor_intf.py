@@ -1,15 +1,15 @@
 from pandas import DataFrame
+from typing import List
 
-from util.logs_column import DataColumn, MetadataColumn, CollapsingRowsColumn, ConnectionColumn
+from util.logs_column import COLUMN_TYPE
 from util.config_store import ConfigStore, Config
-
-type ANY_COLUMN_TYPE = DataColumn|MetadataColumn|CollapsingRowsColumn|ConnectionColumn
-
-DEFAULT_MESSAGE_COLUMN = "Message"
 
 class IProcessor():
     def register_config_store(self) -> 'ConfigStore|Config|None':
         return None
     
-    def process(self, data) -> list[ANY_COLUMN_TYPE]|None:
+    def process(self, data: DataFrame) -> 'COLUMN_TYPE|List[COLUMN_TYPE]|None':
+        '''
+        Process input data and return new columns to be added to LogsManager.
+        '''
         return None

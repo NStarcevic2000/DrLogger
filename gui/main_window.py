@@ -88,7 +88,7 @@ class DrLogMainWindow(QMainWindow):
         self.main_table.verticalHeader().setDefaultSectionSize(self.font_size * 2)
     
     def update(self):
-        self.main_table.refresh()
+        self.main_table.refresh(show_collapsed=True)
 
     def set_QShortcut_action(self, button: str, action: callable):
         shortcut = QShortcut(QKeySequence(button), self)

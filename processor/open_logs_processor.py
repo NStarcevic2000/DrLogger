@@ -4,7 +4,8 @@ from typing import Callable
 from pandas import DataFrame
 from enum import Enum
 
-from processor.processor_intf import IProcessor, DataColumn, MetadataColumn, ANY_COLUMN_TYPE, DEFAULT_MESSAGE_COLUMN
+from processor.processor_intf import IProcessor
+from util.logs_column import COLUMN_TYPE, DataColumn, MetadataColumn, PREDEFINED_COLUMN_NAMES
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
@@ -19,16 +20,16 @@ class OpenLogsProcessor(IProcessor):
     # We expect input to represent log file paths
     def process(self,
                 data: str | list | DataFrame | None = None,
-                keep_source_file_location_arg:KEEP_SOURCE_FILE_LOCATION_ENUM|None=None) -> list[ANY_COLUMN_TYPE]:
+                keep_source_file_location_arg:KEEP_SOURCE_FILE_LOCATION_ENUM|None=None) -> list[COLUMN_TYPE]:
         file_paths = []
         if data is None:
             data = list(CfgMan().get(CfgMan().r.open_logs.log_files, []))
         if isinstance(data, str):
             file_paths.append(data)
-        elif isinstance(data, list):
+        elif isinstance(data, list) and len(data) > 0 and all(isinstance(item, str) for item in data):
             file_paths.extend(data)
-        elif isinstance(data, DataFrame):
-            file_paths.extend(data['file_path'].tolist())
+        else:
+            return None  # No valid files to open
 
         if keep_source_file_location_arg is not None:
             keepSourceFileLocation = keep_source_file_location_arg.value
@@ -60,13 +61,17 @@ class OpenLogsProcessor(IProcessor):
                         visible_file_value = ""
                     
                     rows.append({
-                        'File': visible_file_value,
-                        DEFAULT_MESSAGE_COLUMN: line,
-                        'Original Messages': file_path
+                        PREDEFINED_COLUMN_NAMES.FILE.value: visible_file_value,
+                        PREDEFINED_COLUMN_NAMES.MESSAGE.value: line,
+                        'Original Messages': line
                     })
         data = DataFrame(rows).reset_index(drop=True)
-        if DEFAULT_MESSAGE_COLUMN not in data.columns:
-            return None
-        if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.NONE.value:
-            return [DataColumn(data[DEFAULT_MESSAGE_COLUMN]), MetadataColumn(data['File'])]
-        return [DataColumn(data['File']), DataColumn(data[DEFAULT_MESSAGE_COLUMN])]
+        # Optionally, return the 'File' column if requested
+        result = []
+        if keepSourceFileLocation != KEEP_SOURCE_FILE_LOCATION_ENUM.NONE:
+            result.append(DataColumn(data[PREDEFINED_COLUMN_NAMES.FILE.value]))
+        # Always return the 'Message' column
+        result.append(DataColumn(data[PREDEFINED_COLUMN_NAMES.MESSAGE.value]))
+        # We would like to keep the original messages for displaying them in detail
+        result.append(MetadataColumn(data['Original Messages']))
+        return result

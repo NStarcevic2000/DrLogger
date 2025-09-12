@@ -4,7 +4,9 @@ from typing import Callable
 from pandas import DataFrame
 import re
 
-from processor.processor_intf import IProcessor, DEFAULT_MESSAGE_COLUMN, DataColumn
+from processor.processor_intf import IProcessor
+from util.logs_column import COLUMN_TYPE, DataColumn
+from util.logs_column import PREDEFINED_COLUMN_NAMES
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.presets_manager import PresetsManager
 
@@ -18,11 +20,11 @@ class SplitLogLinesProcessor(IProcessor):
 
     def process(self, data,
                 pattern_format_arg:str|None=None,
-                timestamp_format_arg:str|None=None) -> DataFrame:
+                timestamp_format_arg:str|None=None) -> list[COLUMN_TYPE]|None:
         if not isinstance(data, DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
-        if DEFAULT_MESSAGE_COLUMN not in data.columns:
-            raise ValueError("DataFrame must contain a DEFAULT_MESSAGE_COLUMN column")
+        if PREDEFINED_COLUMN_NAMES.MESSAGE.value not in data.columns and not data.empty:
+            raise ValueError(f"DataFrame must contain a {PREDEFINED_COLUMN_NAMES.MESSAGE.value} column (non-empty)")
         
         # Input:
         # Sample 1 abc:Message 1 cba
@@ -39,8 +41,7 @@ class SplitLogLinesProcessor(IProcessor):
         else:
             pattern = CfgMan().get(CfgMan().r.process_logs.input_pattern, "").strip()
         if not pattern:
-            self.cached_data = data
-            return data
+            return None
         # Replace <Group> with named group that matches any regex word (all but separators)
         regex_pattern = re.sub(r'<(.+?)>', r'(?P<\1>\\w+)', pattern)
         # Replace spaces with \s+ to match any whitespace
@@ -48,7 +49,7 @@ class SplitLogLinesProcessor(IProcessor):
         
         # Apply regex to each Line in the DataFrame
         try:
-            extracted = data[DEFAULT_MESSAGE_COLUMN].str.extract(regex_pattern, expand=True)
+            extracted = data[PREDEFINED_COLUMN_NAMES.MESSAGE.value].str.extract(regex_pattern, expand=True)
             for group in re.findall(r'<(.+?)>', pattern):
                 if group in extracted.columns:
                     data[group] = extracted[group]
@@ -56,9 +57,8 @@ class SplitLogLinesProcessor(IProcessor):
                     data[group] = None
         except Exception as e:
             print("Error extracting groups:", e)
-            self.cached_data = data
-            return data
-        
+            return None
+
         # Apply timestamp format if specified
         # ex. <Year>-<Month>-<Day> <Hour>:<Minutes>:<Seconds>
         # These tags must exist and are already processed in separate columns
@@ -79,18 +79,20 @@ class SplitLogLinesProcessor(IProcessor):
                 data.insert(len(timestamp_tags)+1, 'Timestamp', timestamp_col)
                 data.drop(columns=timestamp_tags, inplace=True, errors='ignore')
 
-        # Remove matched part (including separators) from DEFAULT_MESSAGE_COLUMN to get only the remaining message
+        # Remove matched part (including separators) from PREDEFINED_COLUMN_NAMES.MESSAGE.value to get only the remaining message
         last_group_match = list(re.finditer(r'<(.+?)>', pattern))
         if last_group_match:
             remove_regex = (
             re.sub(r'<(.+?)>', r'\\w+', pattern)
             .replace(' ', r'\s+')
             )
-            data[DEFAULT_MESSAGE_COLUMN] = data[DEFAULT_MESSAGE_COLUMN].str.replace(f'^{remove_regex}', '', regex=True).str.lstrip()
+            data[PREDEFINED_COLUMN_NAMES.MESSAGE.value] = data[PREDEFINED_COLUMN_NAMES.MESSAGE.value].str.replace(f'^{remove_regex}', '', regex=True).str.lstrip()
         else:
-            data[DEFAULT_MESSAGE_COLUMN] = data[DEFAULT_MESSAGE_COLUMN]
-
-        return (\
-            [DataColumn(data[col]) for col in data.columns if col != DEFAULT_MESSAGE_COLUMN] + \
-            [DataColumn(data[DEFAULT_MESSAGE_COLUMN])] \
-        )
+            data[PREDEFINED_COLUMN_NAMES.MESSAGE.value] = data[PREDEFINED_COLUMN_NAMES.MESSAGE.value]
+        # Return new columns first, then the remaining message column
+        results = []
+        for col in data.columns:
+            if col != PREDEFINED_COLUMN_NAMES.MESSAGE.value:
+                results.append(DataColumn(data[col]))
+        results.append(DataColumn(data[PREDEFINED_COLUMN_NAMES.MESSAGE.value]))
+        return results

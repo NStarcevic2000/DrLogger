@@ -8,8 +8,11 @@ from enum import Enum
 
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
-from processor.open_logs_processor import OpenLogsProcessor
-from util.logs_manager import LogsManager
+from processor.open_logs_processor import DataColumn, OpenLogsProcessor
+from util.logs_manager import LogsManager, MetadataColumn
+
+from util.logs_column import COLUMN_TYPE
+from util.test_util import assert_columns_by_type
 
 class TestOpenLogsProcessor(unittest.TestCase):
     def setUp(self):
@@ -29,15 +32,15 @@ class TestOpenLogsProcessor(unittest.TestCase):
 
     def test_process_single_file(self):
         # Test processing a single file
-        result_df =LogsManager().simulate_rendered_data(
-            self.processor.process(
-                data=self.tmp_file.name,
-                keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH
-            )
+        ret_columns = self.processor.process(
+            data=self.tmp_file.name,
+            keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH
         )
-
-        self.assertIsInstance(result_df, DataFrame)
-        self.assertEqual(len(result_df), 3)
+        # Assert columns by type
+        expected_cols = [(DataColumn, 'File'), (DataColumn, 'Message'), (MetadataColumn, 'Original Messages')]
+        assert_columns_by_type(ret_columns, expected_cols)
+        # Check the generated DataFrame
+        result_df = LogsManager().simulate_rendered_data(ret_columns)
         expected_df = DataFrame(
             {'File': 3 * [self.tmp_file.name], 'Message': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]}
         )
@@ -67,26 +70,22 @@ class TestOpenLogsProcessor(unittest.TestCase):
 
     def test_process_no_files(self):
         # Test processing with no files
-        result_df =LogsManager().simulate_rendered_data(
-            self.processor.process(
-                data=[],
-                keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.NONE
-            )
+        ret_columns = self.processor.process(
+            data=[],
+            keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.NONE
         )
-        self.assertIsInstance(result_df, DataFrame)
-        self.assertEqual(len(result_df), 0)
+        # Assert columns by type
+        assert ret_columns is None
 
     def test_process_short_path(self):
         # Test processing with Short Path
-        result_df =LogsManager().simulate_rendered_data(
-            self.processor.process(
-                data=self.tmp_file.name,
-                keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH
-            )
+        ret_columns = self.processor.process(
+            data=self.tmp_file.name,
+            keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH
         )
-
-        self.assertIsInstance(result_df, DataFrame)
-        self.assertEqual(len(result_df), 3)
+        expected_cols = [(DataColumn, 'File'), (DataColumn, 'Message'), (MetadataColumn, 'Original Messages')]
+        assert_columns_by_type(ret_columns, expected_cols)
+        result_df = LogsManager().simulate_rendered_data(ret_columns)
         expected_df = DataFrame({
             'File': 3 * [os.path.basename(self.tmp_file.name)],
             'Message': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]

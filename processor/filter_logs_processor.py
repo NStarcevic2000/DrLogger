@@ -1,12 +1,15 @@
-from processor.processor_intf import ANY_COLUMN_TYPE, IProcessor, DEFAULT_MESSAGE_COLUMN, DataColumn, CollapsingRowsColumn
-
 from pandas import DataFrame, Series
 from enum import Enum
+from typing import List
 
+from processor.processor_intf import IProcessor
+from util.logs_column import COLUMN_TYPE, DataColumn, MetadataColumn, CollapsingRowsColumn
+from util.logs_column import PREDEFINED_COLUMN_NAMES, PREDEFINED_METADATA_CATEGORIES
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
 from util.presets_manager import PresetsManager
 
+FILTERED_LINE = "Filtered Line"
 
 class FilterLogsProcessor(IProcessor):
     def register_config_store(self) -> ConfigStore|Config|None:
@@ -24,10 +27,10 @@ class FilterLogsProcessor(IProcessor):
                 filter_pattern_arg:list|None=None,
                 contextualize_lines_count_arg:int|None=None,
                 contextualize_lines_type_arg:CONTEXTUALIZE_LINES_ENUM|None=None,
-                keep_hidden_logs_arg:bool|None=None) -> list[ANY_COLUMN_TYPE]|None:
+                keep_hidden_logs_arg:bool|None=None) -> List[COLUMN_TYPE]|None:
         if not isinstance(data, DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
-        if data.empty or DEFAULT_MESSAGE_COLUMN not in data.columns:
+        if data.empty or PREDEFINED_COLUMN_NAMES.MESSAGE.value not in data.columns:
             return None
         
         if filter_pattern_arg is not None:
@@ -39,20 +42,18 @@ class FilterLogsProcessor(IProcessor):
             return None
         if len(filter_pattern_data) == 0:
             return None
-        
-        data["show"] = False
+
+        data[FILTERED_LINE] = False
         # In case the list cannot be parsed correctly, make sure we don't fail completely
         try:
-            for pattern_data_pair in filter_pattern_data:
-                pattern_column, pattern = pattern_data_pair
+            for pattern_column, pattern in filter_pattern_data:
                 if pattern_column == "" and pattern == "":
-                    continue  # Skip empty patterns
-                if pattern_column == "":
-                    pattern_column = DEFAULT_MESSAGE_COLUMN
-                if pattern_column not in data.columns:
-                    print(f"Column '{pattern_column}' not found in DataFrame, skipping this pattern.")
                     continue
-                data["show"] |= data[pattern_column].astype(str).str.contains(pattern.strip(), regex=True, na=False)
+                elif pattern_column == "":
+                    pattern_column = PREDEFINED_COLUMN_NAMES.MESSAGE.value
+                if pattern_column not in data.columns:
+                    continue
+                data[FILTERED_LINE] |= data[pattern_column].astype(str).str.contains(pattern.strip(), regex=True, na=False)
         except Exception as e:
             print("Error applying filter patterns:", e)
             return None
@@ -69,9 +70,9 @@ class FilterLogsProcessor(IProcessor):
             contextualize_lines_type = CfgMan().get(CfgMan().r.filter_logs.contextualize_lines, CONTEXTUALIZE_LINES_ENUM.NONE.value)
         contextualize_lines_type = CONTEXTUALIZE_LINES_ENUM(contextualize_lines_type)
         
-        # For each line within contextualize_lines distance from a "show" line, set "show" to True
+        # Contextualize lines
         if contextualize_lines_count > 0 and contextualize_lines_type != CONTEXTUALIZE_LINES_ENUM.NONE:
-            show_indices = data.index[data["show"]]
+            show_indices = data.index[data[FILTERED_LINE]]
             mask = Series(False, index=data.index)
             for idx in show_indices:
                 if contextualize_lines_type == CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE:
@@ -83,15 +84,16 @@ class FilterLogsProcessor(IProcessor):
                 elif contextualize_lines_type == CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER:
                     start = max(idx - contextualize_lines_count, data.index[0])
                     end = min(idx + contextualize_lines_count, data.index[-1])
-                mask.loc[start:end] = True
-                data["show"] = mask
-        
+                mask.iloc[start:end+1] = True
+            data[FILTERED_LINE] = mask
+
         if keep_hidden_logs_arg is None:
             keep_hidden_logs = CfgMan().get(CfgMan().r.filter_logs.keep_hidden_logs, True)
         else:
             keep_hidden_logs = keep_hidden_logs_arg
 
-        if keep_hidden_logs:
-            return [CollapsingRowsColumn(data["show"]).set_heading_pattern("< Filtered {count} row(s)>")]
-        else:
-            return [CollapsingRowsColumn(data["show"])]
+        # Return collapsing rows column if we are keeping hidden logs, otherwise just filter them out
+        collapse_pattern = "< Filtered {count} row(s)>" if keep_hidden_logs else None
+        result = []
+        result.append(CollapsingRowsColumn(data[FILTERED_LINE], collapse_heading_pattern=collapse_pattern))
+        return result
