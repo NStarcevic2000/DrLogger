@@ -1,8 +1,8 @@
-from gui.editor.openFilesSection import OpenFilesSection
-from gui.editor.processLogsSection import ProcessLogsSection
-from gui.editor.colorLogsSection import ColorLogsSection
-from gui.editor.filterLogsSection import FilterLogsSection
-from gui.editor.previewLogsSection import PreviewLogsSection
+from gui.editor.open_logs_section import OpenFilesSection
+from gui.editor.process_logs_section import ProcessLogsSection
+from gui.editor.color_logs_section import ColorLogsSection
+from gui.editor.filtar_logs_section import FilterLogsSection
+from gui.editor.preview_logs_section import PreviewLogsSection
 
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox, QFrame
 from PyQt5.QtCore import Qt

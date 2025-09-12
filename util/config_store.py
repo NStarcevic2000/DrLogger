@@ -3,8 +3,8 @@ from types import SimpleNamespace
 from enum import Enum
 
 from util.singleton import singleton
-from util.fileStorageManager import FileStorageManager
-from util.presetsManager import PresetsManager
+from util.file_storage_manager import FileStorageManager
+from util.presets_manager import PresetsManager
 
 
 

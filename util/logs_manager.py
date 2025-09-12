@@ -1,98 +1,137 @@
-import pandas as pd
 from pandas import DataFrame
+from typing import List
 from util.singleton import singleton
-from util.logs_column import COLUMN_TYPE, DataColumn, MetadataColumn, CollapsingRowsColumn, ConnectionColumn
-
-DEFAULT_MESSAGE_COLUMN = "Message"
+from util.logs_column import COLUMN_TYPE, ORDERED_COLUMN_TYPES, UNIQUE_NAME_COLUMNS, DataColumn, MetadataColumn, CollapsingRowsColumn
 
 @singleton
 class LogsManager():
+    ''' Manages special log columns retrieved by ProcessorManager
+    '''
     def __init__(self):
-        self.columns:list[COLUMN_TYPE] = []
-        self.cached_data = None  # Invalidate cached data
+        self.columns:List[COLUMN_TYPE] = []
+
+        self.cached_columns: List[COLUMN_TYPE] = []
+        # TODO: Is there a better way to handle this? Can't think of any right now.
+        self.cached_before_collapsing: tuple[DataFrame, DataFrame] = (DataFrame(), DataFrame())
+        ''' Cached data before collapsing rows are applied.'''
+        self.cached_fully_rendered: tuple[DataFrame, DataFrame] = (DataFrame(), DataFrame())
+        ''' Cached fully rendered data (after collapsing rows are applied).'''
 
     def erase_data(self):
         self.columns = []
-        self.cached_data = None
+        self.cached_columns = []
+        self.cached_before_collapsing = (DataFrame(), DataFrame())
+        self.cached_fully_rendered = (DataFrame(), DataFrame())
 
-    def update_data(self, new_data:list[COLUMN_TYPE]|COLUMN_TYPE):
-        new_columns = new_data if isinstance(new_data, list) else [new_data]
-        if self.columns is None or self.columns == []:
-            self.columns = new_columns
-            return
-        # Remove all previous columns with the same name as any of the new columns
-        new_column_names = [col.name for col in new_columns]
-        self.columns = [col for col in self.columns if col.name not in new_column_names]
-        # Only then add the new columns
-        self.columns.extend(new_columns)
+    def add_new_columns(self, new_columns:List[COLUMN_TYPE]):
+        ''' Update the current columns with new columns from a processing stage.'''
+        # Check for columns that require unique names and remove old ones
+        for col in new_columns:
+            if type(col) not in UNIQUE_NAME_COLUMNS:
+                self.columns.append(col)
+                continue
+            for search_col in self.columns:
+                if col.name == search_col.name and type(col) == type(search_col):
+                    self.columns.remove(search_col)
+            self.columns.append(col)
+            self.apply_processing(col)
 
-    def get_data(self, rows: int | None = None) -> DataFrame:
-        cols = [col[:rows] for col in self.columns]
-        return pd.concat(cols, axis=1)
-
-    def get_visible_data(self, rows: int | None = None) -> DataFrame:
-        visible_cols = [col[:rows] for col in self.columns if col.__class__ == DataColumn]
-        if not visible_cols:
-            return pd.DataFrame()
-        return pd.concat(visible_cols, axis=1).copy()
-
-    def get_metadata(self, rows: int | None = None) -> DataFrame:
-        metadata_cols = [col[:rows] for col in self.columns if col.__class__ == MetadataColumn]
-        if not metadata_cols:
-            return pd.DataFrame()
-        return pd.concat(metadata_cols, axis=1).copy()
+    def apply_processing(self, next_column):
+        ''' Apply processing immediately with new columns from a processing stage.
+        '''
+        # First do for before collapsing
+        visible_df, metadata = self.cached_before_collapsing
+        visible_df, metadata = next_column.process(
+            visible_df.copy(), metadata.copy()
+        )
+        self.cached_before_collapsing = (visible_df.copy(), metadata.copy())
     
-    def get_collapsing_rows(self, rows: int | None = None) -> DataFrame:
-        collapsing_rows_cols = [col[:rows] for col in self.columns if col.__class__ == CollapsingRowsColumn]
-        if not collapsing_rows_cols:
-            return pd.DataFrame()
-        return pd.concat(collapsing_rows_cols, axis=1).copy()
+    def apply_post_processing(self):
+        ''' Apply post-processing immediately with new columns from a processing stage.
+        '''
+        if self.cached_columns == self.columns:
+            return
+        visible_df, metadata = self.cached_before_collapsing
+        for column in self.columns:
+            visible_df, metadata = column.post_process(
+                visible_df.copy(), metadata.copy()
+            )
+        self.cached_fully_rendered = (visible_df.copy(), metadata.copy())
+        # Cache columns
+        self.cached_columns = self.columns.copy()
+
+    def __apply_process(self,
+                        visible_df: DataFrame,
+                        metadata: DataFrame,
+                        columns: list[COLUMN_TYPE],
+                        ordered_column_types: list[type] = ORDERED_COLUMN_TYPES) -> tuple[DataFrame, DataFrame]:
+        ''' Apply processing to all columns.
+            @param visible_df: DataFrame with visible data
+            @param metadata: DataFrame with metadata
+            @param columns: List of columns to process
+            @param ordered_column_types: Order in which to apply processing
+        '''
+        visible_df, metadata = visible_df, metadata
+        for col_type in ordered_column_types:
+            for col in [x for x in columns if isinstance(x, col_type)]:
+                visible_df, metadata = \
+                    col.process(visible_df.copy(), metadata.copy())
+        return visible_df, metadata
+
+    def __apply_post_process(self,
+                             visible_df:DataFrame,
+                             metadata:DataFrame,
+                             columns:List[COLUMN_TYPE],
+                             ordered_column_types:List[type]=ORDERED_COLUMN_TYPES) -> tuple[DataFrame, DataFrame]:
+        ''' Apply post-processing to all provided columns.
+            @param visible_df: DataFrame with visible data (no metadata columns)
+            @param metadata: DataFrame with metadata columns
+            @param columns: List of columns to apply post-processing to
+            @param ordered_column_types: Order in which to apply post-processing
+        '''
+        visible_df, metadata = visible_df, metadata
+        for col_type in ordered_column_types:
+            for col in [x for x in columns if isinstance(x, col_type)]:
+                visible_df, metadata = \
+                    col.post_process(visible_df.copy(), metadata.copy())
+        return visible_df, metadata
 
     def get_columns(self) -> list[COLUMN_TYPE]:
-        return self.columns
-    
-    def post_process_by_column(self,
-        cols: list[COLUMN_TYPE],
-        visible_data: DataFrame,
-        metadata: DataFrame) -> tuple[DataFrame, DataFrame]:
+        return self.columns.copy()
 
-        # Process DataColumns
-        # In case original DataFrame has some of the columns, we want to replace them with the new DataColumn values
-        for col in [x for x in cols if isinstance(x, DataColumn)]:
-            if col.name in visible_data.columns:
-                del visible_data[col.name]
-            visible_data[col.name] = col
-        
-        # Process MetadataColumns
-        # In case original DataFrame has some of the columns, we want to replace them with the new DataColumn values
-        for col in [x for x in cols if isinstance(x, MetadataColumn)]:
-            if col.name in metadata.columns:
-                del metadata[col.name]
-            metadata[col.name] = col
-
-        # Process CollapsingRowsColumns
-        for col in [x for x in cols if isinstance(x, CollapsingRowsColumn)]:
-            visible_data, metadata = col.post_process(visible_data.copy(), metadata.copy())
-
-        return visible_data, metadata
-
-    def get_rendered_data(self, rows: int | None = None) -> tuple[DataFrame, DataFrame]:
-        visible_data = self.get_visible_data(rows)
-        metadata = self.get_metadata(rows)
-        visible_data, metadata = self.post_process_by_column(self.columns, visible_data.copy(), metadata.copy())
-        return visible_data, metadata
+    def get_data(self, rows: int | list[int] | None = None, show_collapsed:bool=False) -> tuple[DataFrame, DataFrame]:
+        if show_collapsed:
+            self.apply_post_processing()
+            visible_df, metadata = self.cached_fully_rendered if show_collapsed else self.cached_before_collapsing
+        else:
+            visible_df, metadata = self.cached_before_collapsing
+        if isinstance(rows, list):
+            return visible_df.copy().iloc[rows], metadata.copy().iloc[rows]
+        elif isinstance(rows, int):
+            return visible_df.copy()[:rows], metadata.copy()[:rows]
+        else:
+            return visible_df.copy(), metadata.copy()
 
     # For testing purposes, we might use it somewhere else also
     def simulate_rendered_data(self,
             cols: list[COLUMN_TYPE] | None,
-            rows: int | None = None,
-            visible_df: DataFrame | None = None) -> DataFrame:
-        
-        visible_df = DataFrame() if visible_df is None else visible_df
-        
-        visible_df = DataFrame() if visible_df is None else visible_df
-        # Return early if no columns to process
-        if cols is None or len(cols) == 0:
+            rows: int | list[int] = DataFrame(),
+            starting_visible_df: DataFrame = DataFrame(),
+            starting_metadata: DataFrame = DataFrame()) -> DataFrame:
+        ''' Simulate the rendering of a DataFrame with given columns and rows.'''
+        visible_df = starting_visible_df.copy()
+        metadata = starting_metadata.copy()
+        # Check columns
+        if cols is None or \
+                not isinstance(cols, list) or \
+                not all(isinstance(col, COLUMN_TYPE) for col in cols):
+            raise ValueError("cols must be a list of COLUMN_TYPE or None.")
+        if cols is not None:
+            visible_df, metadata = self.__apply_process(visible_df.copy(), metadata.copy(), cols)
+            visible_df, metadata = self.__apply_post_process(visible_df.copy(), metadata.copy(), cols)
+        if isinstance(rows, list):
+            return visible_df.iloc[rows]
+        elif isinstance(rows, int):
+            return visible_df[:rows]
+        else:
             return visible_df
-        visible_df, _ = self.post_process_by_column(cols, visible_df.copy(), DataFrame())
-        return visible_df[:rows] if rows is not None else visible_df

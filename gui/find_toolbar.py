@@ -5,7 +5,7 @@ from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import Qt
 
 from gui.rendered_logs_table import RenderedLogsTable
-from gui.footerNotebook import FOOTER_PAGE, FooterNotebook
+from gui.footer_notebook import FOOTER_PAGE, FooterNotebook
 
 class FindToolbar(QToolBar):
     def __init__(self,
@@ -47,7 +47,8 @@ class FindToolbar(QToolBar):
         self.setMovable(False)
         self.hide()
 
-        self.searching_cache = ("", False, list())  # (search_text, indexes)
+        self.search_cache = ("", list())  # (search_text, indexes)
+        self.search_all_cache = ("", False, list())  # (search_text, in_collapsed_data, indexes)
         self.searching_index = -1
     
     def toggle_visibility(self):
@@ -60,19 +61,17 @@ class FindToolbar(QToolBar):
         self.hide()
 
     def restart_search(self):
-        prerendered = self.find_in_collapsed_checkbox.isChecked()
-        idx_list = self.searchable_table.get_search_indexes(self.find_widget.text(), prerendered=prerendered)
-        self.searching_cache = (self.find_widget.text(), prerendered, idx_list)
+        idx_list = self.searchable_table.get_search_indexes(self.find_widget.text(), in_collapsed_data=True)
+        self.search_cache = (self.find_widget.text(), idx_list)
         self.searching_index = -1
         self.find_next()
     
     def find_next(self, _recursion_guard:int=0):
         if _recursion_guard > 2 or not self.isVisible():
             return
-        if self.find_widget.text() and self.find_widget.text() != self.searching_cache[0] or \
-           self.find_in_collapsed_checkbox.isChecked() != self.searching_cache[1]:
+        if self.find_widget.text() and self.find_widget.text() != self.search_cache[0]:
                 self.restart_search()
-        for row in self.searching_cache[2]:
+        for row in self.search_cache[1]:
             if row > self.searching_index:
                 self.searching_index = row
                 # Simulate user click by setting selection and emitting signals
@@ -88,12 +87,23 @@ class FindToolbar(QToolBar):
         self.find_next(_recursion_guard + 1)
     
     def find_all(self):
-        if self.find_widget.text() and self.find_widget.text() != self.searching_cache[0] or \
-           self.find_in_collapsed_checkbox.isChecked() != self.searching_cache[1]:
-            self.restart_search()
+        if self.find_widget.text() and self.find_widget.text() != self.search_all_cache[0] or \
+           self.find_in_collapsed_checkbox.isChecked() != self.search_all_cache[1]:
+            in_collapsed_data = self.find_in_collapsed_checkbox.isChecked()
+            # If we already cached search indexes for "Find Next", reuse them
+            # Since "Find Next" always searches in collapsed data, only reuse if searching in collapsed data
+            if in_collapsed_data and self.find_widget.text() == self.search_cache[0]:
+                idx_list = self.search_cache[1]
+            else:
+                idx_list = self.searchable_table.get_search_indexes(self.find_widget.text(), in_collapsed_data=in_collapsed_data)
+            self.search_all_cache = (self.find_widget.text(), in_collapsed_data, idx_list)
+        # Show results in the footer table
         render_logs_table = FooterNotebook().get_widget(FOOTER_PAGE.FIND_RESULTS)
         if not render_logs_table:
             render_logs_table = RenderedLogsTable()
             FooterNotebook().set_widget(FOOTER_PAGE.FIND_RESULTS, render_logs_table)
-        render_logs_table.refresh(specific_rows=self.searching_cache[2], prerendered_data=self.searching_cache[1])
+        render_logs_table.refresh(
+            specific_rows=self.search_all_cache[2],
+            show_collapsed=self.search_all_cache[1]
+        )
         FooterNotebook().set_in_focus(FOOTER_PAGE.FIND_RESULTS)

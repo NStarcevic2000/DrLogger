@@ -6,6 +6,7 @@ from pandas import DataFrame
 
 from util.config_store import ConfigManager as CfgMan
 from util.logs_manager import LogsManager
+from util.logs_column import PREDEFINED_COLUMN_NAMES as PCN
 from processor.processor_manager import ProcessorManager
 
 
@@ -16,8 +17,6 @@ class LogsTableModel(QAbstractTableModel):
         super().__init__()
         self._visible_data = visible_data
         self._metadata = metadata
-
-        self._collapsing_root_element = None
 
     def rowCount(self, parent=None):
         return len(self._visible_data)
@@ -30,14 +29,14 @@ class LogsTableModel(QAbstractTableModel):
             return QVariant()
         if role == Qt.DisplayRole:
             return str(self._visible_data.iloc[index.row(), index.column()])
-        elif role == Qt.ForegroundRole and "Foreground" in self._metadata.columns:
-            fg = self._metadata.iloc[index.row()]["Foreground"] if "Foreground" in self._metadata.columns else None
+        elif role == Qt.ForegroundRole and PCN.FOREGROUND.value in self._metadata.columns:
+            fg = self._metadata.iloc[index.row()][PCN.FOREGROUND.value] if PCN.FOREGROUND.value in self._metadata.columns else None
             if fg:
                 return QColor(fg)
             else:
                 return QColor("black")
-        elif role == Qt.BackgroundRole and "Background" in self._metadata.columns:
-            bg = self._metadata.iloc[index.row()]["Background"] if "Background" in self._metadata.columns else None
+        elif role == Qt.BackgroundRole and PCN.BACKGROUND.value in self._metadata.columns:
+            bg = self._metadata.iloc[index.row()][PCN.BACKGROUND.value] if PCN.BACKGROUND.value in self._metadata.columns else None
             if bg:
                 return QColor(bg)
             else:
@@ -73,41 +72,26 @@ class RenderedLogsTable(QTableView):
     def refresh(self,
             preview_lines: int | None = None,
             specific_rows: list[int] | None = None,
-            prerendered_data: bool = False,
-            from_cache: bool = False):
+            show_collapsed: bool = False):
         ProcessorManager().run()
         self.setUpdatesEnabled(False)
-        if not from_cache or None in (self.cached_prerendered_data, self.cached_prerendered_metadata, self.cached_visible_data, self.cached_metadata):
-            self.cached_prerendered_data = LogsManager().get_visible_data(rows=preview_lines)
-            self.cached_prerendered_metadata = LogsManager().get_metadata(rows=preview_lines)
-            self.cached_visible_data, self.cached_metadata = LogsManager().get_rendered_data(rows=preview_lines)
-        if prerendered_data:
-            self.setModel(
-                LogsTableModel(
-                    self.cached_prerendered_data.iloc[specific_rows] if specific_rows is not None else self.cached_visible_data,
-                    self.cached_prerendered_metadata.iloc[specific_rows] if specific_rows is not None else self.cached_metadata
-                )
+        self.setModel(
+            LogsTableModel(
+                *LogsManager().get_data(
+                    rows=preview_lines if specific_rows is None else specific_rows,
+                    show_collapsed=show_collapsed
+                ),
             )
-        else:
-            self.setModel(
-                LogsTableModel(
-                    self.cached_visible_data.iloc[specific_rows] if specific_rows is not None else self.cached_visible_data,
-                    self.cached_metadata.iloc[specific_rows] if specific_rows is not None else self.cached_metadata
-                )
-            )
-
+        )
         self.resizeColumnsToContents()
         # Last column does not expand indefinitely; horizontal scrolling enabled
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.horizontalHeader().setStretchLastSection(True)
         self.setUpdatesEnabled(True)
-    
-    def get_search_indexes(self, search_text: str, prerendered:bool=False) -> list[int]:
+
+    def get_search_indexes(self, search_text: str, in_collapsed_data: bool=False) -> list[int]:
         indexes = []
-        if prerendered:
-            data = self.cached_prerendered_data
-        else:
-            data = self.cached_visible_data
+        data = LogsManager().get_data(show_collapsed=in_collapsed_data)[0]
         for row in range(len(data)):
             for col in data.columns:
                 if search_text.lower() in str(data.at[row, col]).lower():

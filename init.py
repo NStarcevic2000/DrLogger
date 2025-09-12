@@ -6,13 +6,13 @@ from PyQt5.QtWidgets import QApplication
 from processor.processor_manager import ProcessorManager
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.logs_manager import LogsManager
-from util.presetsManager import PresetsManager
+from util.presets_manager import PresetsManager
 from util.config_enums import (
     KEEP_SOURCE_FILE_LOCATION_ENUM,
     CONTEXTUALIZE_LINES_ENUM
 )
 
-from gui.mainWindow import DrLogMainWindow
+from gui.main_window import DrLogMainWindow
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

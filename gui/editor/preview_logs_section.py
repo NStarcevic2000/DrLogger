@@ -73,4 +73,7 @@ class PreviewLogsSection(QVBoxLayout):
         self.label.setEnabled(enabled)
     
     def preview_logs_cmd(self):
-        self.preview_logs_table.refresh(CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5))
+        self.preview_logs_table.refresh(
+            CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5),
+            show_collapsed=True
+        )
