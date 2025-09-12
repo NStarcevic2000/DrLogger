@@ -19,11 +19,11 @@ from gui.find_toolbar import FindToolbar
 from gui.footer_notebook import FooterNotebook
 from PyQt5.QtWidgets import QTabWidget
 
-class DrLogMainWindow(QMainWindow):
+class DrLoggerMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("DrLog - All-in-one Log Viewer")
+        self.setWindowTitle("DrLogger - All-in-one Log Viewer")
         self.setGeometry(200, 200, 1500, 700)
         
         self.font_size = 10  # Default font size

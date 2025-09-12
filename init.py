@@ -12,7 +12,7 @@ from util.config_enums import (
     CONTEXTUALIZE_LINES_ENUM
 )
 
-from gui.main_window import DrLogMainWindow
+from gui.main_window import DrLoggerMainWindow
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -28,7 +28,7 @@ if __name__ == "__main__":
         )
     )
 
-    viewer = DrLogMainWindow()
+    viewer = DrLoggerMainWindow()
     viewer.show()
     # Benchmark performance of initial rendering
     # profiler = cProfile.Profile()
