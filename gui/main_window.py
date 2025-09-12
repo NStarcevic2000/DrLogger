@@ -47,11 +47,6 @@ class DrLogMainWindow(QMainWindow):
 
         self.main_table = RenderedLogsTable()
 
-        self.footer_notebook = FooterNotebook()
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.footer_notebook)
-
-        self.main_table = RenderedLogsTable()
-
         self.toolbar = QToolBar("Main Toolbar")
         for action_name, callback in toolbar_cb.items():
             action = QAction(action_name, self)
@@ -64,20 +59,12 @@ class DrLogMainWindow(QMainWindow):
         QShortcut(QKeySequence("Ctrl+F"), self, self.find_toolbar.toggle_visibility)
         self.addToolBarBreak(Qt.TopToolBarArea)
         self.addToolBar(Qt.TopToolBarArea, self.find_toolbar)
-        self.find_toolbar = FindToolbar(self, self.main_table)
-        QShortcut(QKeySequence("Ctrl+F"), self, self.find_toolbar.toggle_visibility)
-        self.addToolBarBreak(Qt.TopToolBarArea)
-        self.addToolBar(Qt.TopToolBarArea, self.find_toolbar)
 
         self.setCentralWidget(self.main_table)
         self.set_table_font(self.font_size)
 
         QShortcut(QKeySequence("Ctrl++"), self, self.increase_font_size)
         QShortcut(QKeySequence("Ctrl+-"), self, self.decrease_font_size)
-
-        QShortcut(QKeySequence(Qt.Key_Return), self, self.find_toolbar.find_next)
-
-        self.keyboard_shortcuts_stack = {}
 
         QShortcut(QKeySequence(Qt.Key_Return), self, self.find_toolbar.find_next)
 
