@@ -4,8 +4,11 @@ from gui.editor.color_logs_section import ColorLogsSection
 from gui.editor.filtar_logs_section import FilterLogsSection
 from gui.editor.preview_logs_section import PreviewLogsSection
 
+from gui.common.status_bar import StatusBar
+
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox, QFrame
 from PyQt5.QtCore import Qt
+from processor.processor_manager import ProcessorManager
 
 class EditorPrompt(QDialog):
     def __init__(self=None, on_run_cmd=None):
@@ -49,13 +52,16 @@ class EditorPrompt(QDialog):
         self.layout.addLayout(self.preview_logs_section)
 
         self.save_button = QPushButton("Run")
-        self.save_button.clicked.connect(self.run_cmd)
 
-        self.status_label = QLabel("Status: Ready")
-        self.status_label.setAlignment(Qt.AlignLeft)
-        
+        self.status_bar = StatusBar()
+        self.status_bar.set_enabled(True)
+
+        self.save_button.clicked.connect(
+            lambda: self.status_bar.call_in_background(ProcessorManager().run, on_done=self.on_done_cmd)
+        )
+
         hbox = QHBoxLayout()
-        hbox.addWidget(self.status_label)
+        hbox.addWidget(self.status_bar)
         hbox.addStretch(1)
         hbox.addWidget(self.save_button)
         self.layout.addLayout(hbox)
@@ -64,10 +70,10 @@ class EditorPrompt(QDialog):
         self.update()
         self.show()
 
-    def run_cmd(self):
+    def on_done_cmd(self):
+        self.close()
         if self.on_run_cmd:
             self.on_run_cmd()
-        self.close()
 
     def update(self):
         self.open_files_section.update_content()
