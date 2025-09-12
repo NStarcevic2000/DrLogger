@@ -41,6 +41,8 @@ class LogsTableModel(QAbstractTableModel):
                 return QColor(bg)
             else:
                 return QColor("white")
+            else:
+                return QColor("white")
         elif role == Qt.TextAlignmentRole:
             return Qt.AlignLeft | Qt.AlignVCenter
         return QVariant()
