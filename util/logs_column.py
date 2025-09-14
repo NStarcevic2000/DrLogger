@@ -72,7 +72,12 @@ class MetadataColumn(Series):
         # Delete previous column
         if self.name in metadata.columns:
             metadata.drop(columns=[self.name], inplace=True)
-        metadata[self.name] = self.values.copy()
+        metadata[self.name] = [
+            {
+                self.__category: {
+                    self.name: value
+                }
+            } for value in self.values.copy()]
         return rendered_data.copy(), metadata.copy()
     
     @final

@@ -17,7 +17,7 @@ from gui.preset_prompt import PresetPrompt
 from gui.rendered_logs_table import RenderedLogsTable
 
 from gui.find_toolbar import FindToolbar
-from gui.footer_notebook import FooterNotebook
+from gui.footer_notebook import FooterNotebook, FOOTER_PAGE
 from PyQt5.QtWidgets import QTabWidget
 
 from PyQt5.QtCore import QTimer
@@ -49,6 +49,7 @@ class DrLoggerMainWindow(QMainWindow):
         self.addDockWidget(Qt.BottomDockWidgetArea, self.footer_notebook)
 
         self.main_table = RenderedLogsTable()
+        self.main_table.doubleClicked.connect(self.handle_row_double_click)
 
         self.toolbar = QToolBar("Main Toolbar")
         for action_name, callback in toolbar_cb.items():
@@ -109,3 +110,8 @@ class DrLoggerMainWindow(QMainWindow):
             shortcut.activated.disconnect()
             shortcut.setParent(None)
             del shortcut
+    
+    def handle_row_double_click(self, index):
+        from gui.footer_notebook import FooterNotebook
+        from gui.meatadata_content import MetadataContent
+        MetadataContent().show_in_footer(index.row())

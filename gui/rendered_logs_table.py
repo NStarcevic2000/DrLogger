@@ -9,6 +9,7 @@ from util.logs_manager import LogsManager
 from util.logs_column import PREDEFINED_COLUMN_NAMES as PCN
 from processor.processor_manager import ProcessorManager
 
+from gui.meatadata_content import MetadataContent
 
 class LogsTableModel(QAbstractTableModel):
     def __init__(self,
@@ -29,18 +30,18 @@ class LogsTableModel(QAbstractTableModel):
             return QVariant()
         if role == Qt.DisplayRole:
             return str(self._visible_data.iloc[index.row(), index.column()])
-        elif role == Qt.ForegroundRole and PCN.FOREGROUND.value in self._metadata.columns:
-            fg = self._metadata.iloc[index.row()][PCN.FOREGROUND.value] if PCN.FOREGROUND.value in self._metadata.columns else None
-            if fg:
-                return QColor(fg)
-            else:
-                return QColor("black")
-        elif role == Qt.BackgroundRole and PCN.BACKGROUND.value in self._metadata.columns:
-            bg = self._metadata.iloc[index.row()][PCN.BACKGROUND.value] if PCN.BACKGROUND.value in self._metadata.columns else None
-            if bg:
-                return QColor(bg)
-            else:
-                return QColor("white")
+        # elif role == Qt.ForegroundRole and PCN.FOREGROUND.value in self._metadata.columns:
+        #     fg = self._metadata.iloc[index.row()][PCN.FOREGROUND.value] if PCN.FOREGROUND.value in self._metadata.columns else None
+        #     if fg:
+        #         return QColor(fg)
+        #     else:
+        #         return QColor("black")
+        # elif role == Qt.BackgroundRole and PCN.BACKGROUND.value in self._metadata.columns:
+        #     bg = self._metadata.iloc[index.row()][PCN.BACKGROUND.value] if PCN.BACKGROUND.value in self._metadata.columns else None
+        #     if bg:
+        #         return QColor(bg)
+        #     else:
+        #         return QColor("white")
         elif role == Qt.TextAlignmentRole:
             return Qt.AlignLeft | Qt.AlignVCenter
         return QVariant()
@@ -56,12 +57,11 @@ class LogsTableModel(QAbstractTableModel):
 class RenderedLogsTable(QTableView):
     def __init__(self):
         super().__init__()
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSortingEnabled(False)
         self.setModel(LogsTableModel(DataFrame(), DataFrame()))
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.horizontalHeader().setStretchLastSection(True)
         
         self.cached_prerendered_data:DataFrame = DataFrame()
