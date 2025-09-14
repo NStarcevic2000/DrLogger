@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QVBoxLayout, QLabel, QWidget, QHBoxLayout, QFrame, QToolButton
+from PyQt5.QtCore import Qt
 
 from pandas import DataFrame
 
@@ -6,6 +7,83 @@ from util.singleton import singleton
 from util.logs_manager import LogsManager
 
 from gui.footer_notebook import FooterNotebook
+
+
+
+class MetadataWidget(QWidget):
+    # Metadata Header
+    class MetadataHeader(QWidget):
+        def __init__(self, category:str):
+            super().__init__()
+            self.button = QToolButton()
+            self.button.setArrowType(Qt.RightArrow)
+            label = QLabel(f"<b>{category}</b>")
+            layout = QHBoxLayout()
+            layout.addWidget(self.button)
+            layout.addWidget(label)
+            layout.addStretch(1)
+            self.setLayout(layout)
+            self.setStyleSheet("""
+                margin: 0px;
+                padding: 5px;
+                border-radius: 5px;
+                background-color: #f0f0f0;
+                QToolButton {
+                    border: none;
+                    width: 15px;
+                    height: 15px;
+                    background-color: transparent;
+                }
+                QToolButton::hover { background-color: lightgray; }
+                QLabel {
+                    background-color: transparent;
+                }
+            """)
+        def connect_collapsable(self, frame:QFrame) -> QWidget:
+            self.button.setCheckable(True)
+            self.button.clicked.connect(
+                lambda checked, b=self.button, f=frame:
+                    (b.setArrowType(Qt.DownArrow if checked else Qt.RightArrow), f.setVisible(checked))
+            )
+            return self
+    # Metadata Frame
+    class MetadataFrame(QFrame):
+        def __init__(self, details:dict):
+            super().__init__()
+            self.setFrameShape(QFrame.StyledPanel)
+            layout = QVBoxLayout()
+            for key, value in details.items():
+                label = QLabel(f"<b>{key}:</b> {value}")
+                label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+                layout.addWidget(label)
+            layout.addStretch(1)
+            self.setLayout(layout)
+            self.setVisible(False)
+    
+    # Container for both
+    def __init__(self, metadata:dict):
+        super().__init__()
+        self.metadata = None
+        self.update(metadata)
+    
+    def update(self, metadata:dict):
+        if self.metadata == metadata:
+            return
+        self.metadata = metadata
+        layout = QVBoxLayout()
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(2)
+        for category, details in metadata.items():
+            if isinstance(details, dict):
+                frame = self.MetadataFrame(details)
+                header = self.MetadataHeader(category).connect_collapsable(frame)
+                layout.addWidget(header)
+                layout.addWidget(frame)
+        layout.addStretch(1)
+        self.setLayout(layout)
+        self.repaint()
+
+
 
 @singleton
 class MetadataContent():
@@ -31,7 +109,8 @@ class MetadataContent():
             In case of running in a background, it will request this one to be done immediatly.
         '''
         if self._current_data.at[index, self.__METADATA] is not None:
-            return self._current_data.at[index, self.__METADATA]
+            if show_in_footer:
+                FooterNotebook().set_widget("Metadata", self._current_data.at[index, self.__METADATA])
         if not self._current_data.at[index, self.__IS_RUNNING]:
             # Mark as running
             self._current_data.at[index, self.__IS_RUNNING] = True
@@ -51,7 +130,7 @@ class MetadataContent():
                     print("After merge:", gen_dict)
                 else:
                     print(f"Skipping non-dict metadata for column {col}: {self._current_data.at[index, col]}")
-            generate_widget = self.generate_widget(gen_dict)
+            generate_widget = MetadataWidget(gen_dict)
             self._current_data.at[index, self.__METADATA] = generate_widget
             if show_in_footer:
                 FooterNotebook().set_widget("Metadata", generate_widget)
@@ -68,48 +147,3 @@ class MetadataContent():
         self.prepare_for_generating()
         for i in range(len(self._current_data)):
             self.generate_for_line(i)
-    
-    def generate_widget(self, metadata:dict) -> QWidget:
-        ''' Generate a QWidget to display the metadata dictionary. '''
-        widget = QWidget()
-        vbox = QVBoxLayout(widget)
-        # Parse by category
-        for category, details in metadata.items():
-            print(f"Generating category: {category} with details: {details}")
-            # Define the Widget content
-            category_header_container = QHBoxLayout()
-            
-            category_header_collapsable_button = QToolButton()
-            category_header_collapsable_button.setText("▶")
-            category_header_collapsable_button.setCheckable(True)
-            category_header_container.addWidget(category_header_collapsable_button)
-
-            category_header_label = QLabel(f"<b>{category}</b>")
-            category_header_container.addWidget(category_header_label)
-
-            category_details_frame = QFrame()
-            category_details_frame.setFrameShape(QFrame.StyledPanel)
-            category_details_frame.setVisible(False)
-
-            # Toggle visibility on button click
-            def toggle_details_visibility(checked, button=category_header_collapsable_button, frame=category_details_frame):
-                if checked:
-                    button.setText("▼")
-                    frame.setVisible(True)
-                else:
-                    button.setText("▶")
-                    frame.setVisible(False)
-            category_header_collapsable_button.toggled.connect(toggle_details_visibility)
-
-            # Present each detail in the category
-            category_details_layout = QVBoxLayout()
-            for key, value in details.items():
-                print("Generating detail:", key, value)
-                detail_label = QLabel(f"{key}: {value}")
-                category_details_layout.addWidget(detail_label)
-            category_details_frame.setLayout(category_details_layout)
-            vbox.addLayout(category_header_container)
-            vbox.addWidget(category_details_frame)
-        vbox.addStretch(1)
-        widget.setLayout(vbox)
-        return widget
