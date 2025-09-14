@@ -6,7 +6,7 @@ from pandas import DataFrame
 from util.singleton import singleton
 from util.logs_manager import LogsManager
 
-from gui.footer_notebook import FooterNotebook
+from gui.footer_notebook import FooterNotebook, FOOTER_PAGE
 
 
 
@@ -110,7 +110,7 @@ class MetadataContent():
         '''
         if self._current_data.at[index, self.__METADATA] is not None:
             if show_in_footer:
-                FooterNotebook().set_widget("Metadata", self._current_data.at[index, self.__METADATA])
+                FooterNotebook().set_widget(FOOTER_PAGE.METADATA, self._current_data.at[index, self.__METADATA])
         if not self._current_data.at[index, self.__IS_RUNNING]:
             # Mark as running
             self._current_data.at[index, self.__IS_RUNNING] = True
@@ -133,7 +133,7 @@ class MetadataContent():
             generate_widget = MetadataWidget(gen_dict)
             self._current_data.at[index, self.__METADATA] = generate_widget
             if show_in_footer:
-                FooterNotebook().set_widget("Metadata", generate_widget)
+                FooterNotebook().set_widget(FOOTER_PAGE.METADATA, generate_widget)
             # except Exception as e:
             #     print(f"Error generating metadata for line {index}: {e}")
             #finally:
