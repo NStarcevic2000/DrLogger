@@ -59,9 +59,9 @@ class SplitLogLinesProcessor(IProcessor):
             print("Error extracting groups:", e)
             return None
 
-        # Apply timestamp format if specified
-        # ex. <Year>-<Month>-<Day> <Hour>:<Minutes>:<Seconds>
-        # These tags must exist and are already processed in separate columns
+        # Convert all possible nan's to empty string
+        data = data.fillna("")
+
         if timestamp_format_arg is not None:
             timestamp_format_arg = timestamp_format_arg.strip()
         else:
@@ -73,7 +73,7 @@ class SplitLogLinesProcessor(IProcessor):
                 # Apply extraction from columns to 'Timestamp' column
                 # Insert as column 2
                 timestamp_col = data[timestamp_tags].apply(
-                    lambda row: agg_format.format(*row.values),
+                    lambda row: agg_format.format(*row.values) if all(isinstance(val, str) and val!="" for val in row.values) else "",
                     axis=1
                 )
                 data.insert(len(timestamp_tags)+1, 'Timestamp', timestamp_col)
