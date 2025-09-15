@@ -5,7 +5,7 @@ from pandas import DataFrame
 from enum import Enum
 
 from processor.processor_intf import IProcessor
-from util.logs_column import COLUMN_TYPE, DataColumn, MetadataColumn, PREDEFINED_COLUMN_NAMES
+from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn, MetadataColumn, PREDEFINED_COLUMN_NAMES
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 

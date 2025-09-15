@@ -6,7 +6,7 @@ from pandas import DataFrame
 
 from util.config_store import ConfigManager as CfgMan
 from processor.processor_manager import ProcessorManager
-from util.logs_manager import LogsManager
+from logs_managing.logs_manager import LogsManager
 
 from gui.rendered_logs_table import RenderedLogsTable
 

@@ -1,6 +1,10 @@
-from util.logs_column import COLUMN_TYPE
+from logs_managing.logs_column_types import COLUMN_TYPE
 
 def assert_columns_by_type(columns:list[COLUMN_TYPE], expected_types:list[tuple[COLUMN_TYPE, str]]):
+    if isinstance(columns, COLUMN_TYPE):
+        columns = [columns]
+    elif not isinstance(columns, list) or not all(isinstance(x, COLUMN_TYPE) for x in columns):
+        raise ValueError(f"Columns must be a COLUMN_TYPE or list of COLUMN_TYPE. Current value: {columns}")
     for i, (col, (col_type, col_name)) in enumerate(zip(columns, expected_types)):
         if not (isinstance(col, col_type) and getattr(col, 'name', None) == col_name):
             try:

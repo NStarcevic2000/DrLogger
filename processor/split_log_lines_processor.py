@@ -5,8 +5,8 @@ from pandas import DataFrame
 import re
 
 from processor.processor_intf import IProcessor
-from util.logs_column import COLUMN_TYPE, DataColumn
-from util.logs_column import PREDEFINED_COLUMN_NAMES
+from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn
+from logs_managing.logs_column_types import RESERVED_COLUMN_NAMES_NAMESPACE as RColNameNS
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.presets_manager import PresetsManager
 
@@ -23,9 +23,9 @@ class SplitLogLinesProcessor(IProcessor):
                 timestamp_format_arg:str|None=None) -> list[COLUMN_TYPE]|None:
         if not isinstance(data, DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
-        if PREDEFINED_COLUMN_NAMES.MESSAGE.value not in data.columns and not data.empty:
-            raise ValueError(f"DataFrame must contain a {PREDEFINED_COLUMN_NAMES.MESSAGE.value} column (non-empty)")
-        
+        if RColNameNS.Message not in data.columns and not data.empty:
+            raise ValueError(f"DataFrame must contain a {RColNameNS.Message} column (non-empty)")
+
         # Input:
         # Sample 1 abc:Message 1 cba
         # Sample 2 def:Message 2 fed

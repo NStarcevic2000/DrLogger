@@ -3,8 +3,8 @@ from enum import Enum
 from typing import List
 
 from processor.processor_intf import IProcessor
-from util.logs_column import COLUMN_TYPE, DataColumn, MetadataColumn, CollapsingRowsColumn
-from util.logs_column import PREDEFINED_COLUMN_NAMES, PREDEFINED_METADATA_CATEGORIES
+from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn, MetadataColumn, CollapsingRowsColumn
+from logs_managing.logs_column_types import PREDEFINED_COLUMN_NAMES, PREDEFINED_METADATA_CATEGORIES
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
 from util.presets_manager import PresetsManager

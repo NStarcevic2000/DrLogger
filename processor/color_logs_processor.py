@@ -1,7 +1,7 @@
 from pandas import DataFrame
 
 from processor.processor_intf import IProcessor
-from util.logs_column import MetadataColumn, PREDEFINED_COLUMN_NAMES as PCN
+from logs_managing.logs_column_types import MetadataColumn, PREDEFINED_COLUMN_NAMES as PCN
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.presets_manager import PresetsManager
 

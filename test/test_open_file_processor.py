@@ -9,9 +9,9 @@ from enum import Enum
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
 from processor.open_logs_processor import DataColumn, OpenLogsProcessor
-from util.logs_manager import LogsManager, MetadataColumn
+from logs_managing.logs_manager import LogsManager, MetadataColumn
 
-from util.logs_column import COLUMN_TYPE
+from logs_managing.logs_column_types import COLUMN_TYPE
 from util.test_util import assert_columns_by_type
 
 class TestOpenLogsProcessor(unittest.TestCase):

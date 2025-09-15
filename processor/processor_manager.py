@@ -2,8 +2,8 @@ import traceback
 import time
 
 from util.singleton import singleton
-from util.logs_manager import LogsManager
-from util.logs_column import COLUMN_TYPE
+from logs_managing.logs_manager import LogsManager
+from logs_managing.logs_column_types import COLUMN_TYPE
 from util.config_store import ConfigManager as CfgMan
 from processor.processor_intf import IProcessor
 from processor.open_logs_processor import OpenLogsProcessor
@@ -39,7 +39,7 @@ class ProcessorManager:
                 # Perform processing over "non-collapsed" visible data
                 # (metadata columns are not visible to processors)
                 # Only the first processor gets the list of log files as input
-                input_data = LogsManager().get_data(show_collapsed=False)[0] if processor != self.processors[0] else CfgMan().get(CfgMan().r.open_logs.log_files)
+                input_data = LogsManager().get_data() if processor != self.processors[0] else CfgMan().get(CfgMan().r.open_logs.log_files)
                 print(f"Input data type: {type(input_data)}")
                 print(input_data)
                 returned_columns = processor.process(input_data)

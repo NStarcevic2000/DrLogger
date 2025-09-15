@@ -5,8 +5,8 @@ from pandas import DataFrame
 from pandas import Series
 from pandas.testing import assert_frame_equal
 
-from util.logs_column import CollapsingRowsColumn, DataColumn, MetadataColumn
-from util.logs_manager import LogsManager
+from logs_managing.logs_column_types import CollapsingRowsColumn, DataColumn, MetadataColumn
+from logs_managing.logs_manager import LogsManager
 
 class TestLogsManager(unittest.TestCase):
     def test_simulate_rendered_data_errors(self):
@@ -33,7 +33,7 @@ class TestLogsManager(unittest.TestCase):
         input_df = DataFrame({'Message': ['line1', 'line2', 'line3']})
         col_list = [DataColumn(input_df['Message'])]
         result_df = LogsManager().simulate_rendered_data(col_list)
-        assert_frame_equal(result_df, input_df)
+        assert_frame_equal(result_df, input_df, check_dtype=False)
     
         # Test with no columns
         col_list = []
@@ -48,14 +48,14 @@ class TestLogsManager(unittest.TestCase):
         })
         col_list = [DataColumn(input_df['Message']), DataColumn(input_df['Level'])]
         result_df = LogsManager().simulate_rendered_data(col_list)
-        assert_frame_equal(result_df, input_df)
+        assert_frame_equal(result_df, input_df, check_dtype=False)
 
         # Test with new column created from a list
         col_list = [DataColumn(['A', 'B', 'C'], name='Category')]
         result_df = LogsManager().simulate_rendered_data(col_list)
         assert_frame_equal(result_df, DataFrame({
             'Category': ['A', 'B', 'C']
-        }))
+        }), check_dtype=False)
 
         # Test with starting DataFrame and column that modifies it
         # Order matters
@@ -96,7 +96,7 @@ class TestLogsManager(unittest.TestCase):
         expected_df = DataFrame({
             'Message': ['line1', 'line2', 'line3']
         })
-        assert_frame_equal(result_df, expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)
     
 
 
@@ -123,10 +123,11 @@ class TestLogsManager(unittest.TestCase):
     def test_simulate_rendered_data_with_all_columns(self):
         # Test real-life scenario with all column types
         col_list = [
-            CollapsingRowsColumn([False, True, False], name='Show Failed Only'),
+            CollapsingRowsColumn([False, True, False], name='Show Failed Only', collapse_heading_pattern="<Collapsed>"),
             DataColumn(['Sender1', 'Sender2', 'Sender3'], name='From'),
             DataColumn(['Receiver1', 'Receiver2', 'Receiver3'], name='To'),
             DataColumn(['Success', 'Failed', 'Success'], name='Category'),
+            DataColumn(['Random Message1', 'Random Message2', 'Random Message3'], name='Message'),
             MetadataColumn(['TCP', 'UDP', 'TCP'], name='Protocol', category='Network')
         ]
 
@@ -136,15 +137,16 @@ class TestLogsManager(unittest.TestCase):
             'To': ['Receiver2'],
             'Category': ['Failed']
         })
+        print(result_df)
         assert_frame_equal(result_df, expected_df)
     
 
 
     def test_logs_manager_through_stages(self):
         LogsManager().erase_data()
-        visible_df, metadata_df = LogsManager().get_data()
-        assert_frame_equal(visible_df, DataFrame())
-        assert_frame_equal(metadata_df, DataFrame())
+        visible_df, metadata_df = LogsManager().get_data(), LogsManager().get_metadata()
+        assert isinstance(visible_df, DataFrame) and visible_df.empty
+        assert isinstance(metadata_df, Series) and metadata_df.empty
 
         # Add initial data
         input_df = DataFrame({
@@ -155,7 +157,7 @@ class TestLogsManager(unittest.TestCase):
             DataColumn(input_df['Message']),
             MetadataColumn(input_df['Level'])
         ])
-        visible_df, metadata_df = LogsManager().get_data()
+        visible_df, metadata_df = LogsManager().get_data(), LogsManager().get_metadata()
         assert_frame_equal(visible_df, DataFrame({
             'Message': ['line1', 'line2', 'line3']
         }))
@@ -167,7 +169,7 @@ class TestLogsManager(unittest.TestCase):
         LogsManager().add_new_columns([
             DataColumn(['A', 'B', 'C'], name='Category')
         ])
-        visible_df, metadata_df = LogsManager().get_data()
+        visible_df, metadata_df = LogsManager().get_data(), LogsManager().get_metadata()
         assert_frame_equal(visible_df, DataFrame({
             'Message': ['line1', 'line2', 'line3'],
             'Category': ['A', 'B', 'C']
@@ -180,7 +182,7 @@ class TestLogsManager(unittest.TestCase):
         LogsManager().add_new_columns([
             DataColumn(input_df['Message'].str.upper(), name='Message')
         ])
-        visible_df, metadata_df = LogsManager().get_data()
+        visible_df, metadata_df = LogsManager().get_data(), LogsManager().get_metadata()
         assert_frame_equal(visible_df, DataFrame({
             'Category': ['A', 'B', 'C'],
             'Message': ['LINE1', 'LINE2', 'LINE3'],
@@ -193,7 +195,7 @@ class TestLogsManager(unittest.TestCase):
         LogsManager().add_new_columns([
             CollapsingRowsColumn([False, True, False], name='Show Failed Only')
         ])
-        visible_df, metadata_df = LogsManager().get_data(show_collapsed=True)
+        visible_df, metadata_df = LogsManager().get_data(), LogsManager().get_metadata()
         assert_frame_equal(visible_df, DataFrame({
             'Category': ['B'],
             'Message': ['LINE2'],

@@ -6,8 +6,8 @@ from pandas.testing import assert_frame_equal
 
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
 from processor.filter_logs_processor import FilterLogsProcessor, FILTERED_LINE
-from util.logs_manager import LogsManager
-from util.logs_column import CollapsingRowsColumn
+from logs_managing.logs_manager import LogsManager
+from logs_managing.logs_column_types import CollapsingRowsColumn
 from util.test_util import assert_columns_by_type
 
 class TestFilterLogsProcessor(unittest.TestCase):

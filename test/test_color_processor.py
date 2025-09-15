@@ -4,7 +4,7 @@ from pandas.testing import assert_frame_equal, assert_series_equal
 
 from processor.color_logs_processor import ColorLogsProcessor
 from processor.processor_manager import LogsManager
-from util.logs_column import MetadataColumn, PREDEFINED_COLUMN_NAMES as PCN
+from logs_managing.logs_column_types import MetadataColumn, PREDEFINED_COLUMN_NAMES as PCN
 from util.test_util import assert_columns_by_type
 
 class TestColorLogsProccessor(unittest.TestCase):
