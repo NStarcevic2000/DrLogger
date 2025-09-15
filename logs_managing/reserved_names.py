@@ -11,5 +11,11 @@ RESERVED_METADATA_NAMES = get_namespaces({
         "ForegroundColor": "#000000",
         "BackgroundColor": "#FFFFFF",
         "FontStyle": "Normal"
+    },
+    "CollapsedRows": {
+        "CollapsedRows": "Collapsed Rows",
+        "FromToIndexes": "From-To Indexes",
+        "CollapsedInTotal": "Collapsed in Total"
     }
 }, str)
+print(RESERVED_METADATA_NAMES)

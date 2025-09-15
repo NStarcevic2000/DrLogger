@@ -5,7 +5,8 @@ from pandas import DataFrame
 from enum import Enum
 
 from processor.processor_intf import IProcessor
-from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn, MetadataColumn, PREDEFINED_COLUMN_NAMES
+from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn, MetadataColumn
+from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
@@ -61,17 +62,17 @@ class OpenLogsProcessor(IProcessor):
                         visible_file_value = ""
                     
                     rows.append({
-                        PREDEFINED_COLUMN_NAMES.FILE.value: visible_file_value,
-                        PREDEFINED_COLUMN_NAMES.MESSAGE.value: line,
+                        RColNameNS.File: visible_file_value,
+                        RColNameNS.Message: line,
                         'Original Messages': line
                     })
         data = DataFrame(rows).reset_index(drop=True)
         # Optionally, return the 'File' column if requested
         result = []
         if keepSourceFileLocation != KEEP_SOURCE_FILE_LOCATION_ENUM.NONE:
-            result.append(DataColumn(data[PREDEFINED_COLUMN_NAMES.FILE.value]))
+            result.append(DataColumn(data[RColNameNS.File]))
         # Always return the 'Message' column
-        result.append(DataColumn(data[PREDEFINED_COLUMN_NAMES.MESSAGE.value]))
+        result.append(DataColumn(data[RColNameNS.Message]))
         # We would like to keep the original messages for displaying them in detail
         result.append(MetadataColumn(data['Original Messages']))
         return result

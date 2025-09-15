@@ -19,6 +19,7 @@ class LogsContainer():
         return self
 
     def set_data_column(self, column:Series, name:str):
+        print(f"Setting data column '{name}'")
         ''' Set or update the main data DataFrame. '''
         if not isinstance(column, Series) or column.dtype != "string":
             raise ValueError("column must be a pandas Series of strings.")
@@ -27,6 +28,9 @@ class LogsContainer():
         elif len(column) != len(self.data):
             raise ValueError("New data must have the same number of rows as existing data.")
         else:
+            # Replace original column with new one
+            self.data = self.data.drop(columns=[name], errors='ignore')
+            # Add column to the end
             self.data[name] = column.copy()
         return self
     
@@ -135,43 +139,82 @@ class LogsContainer():
         elif self.metadata.empty:
             self.metadata = collapsable.copy()
         else:
-            # If there is a collapse pattern, insert a heading row for each group of collapsed rows
+            captured_uid = 0
             captured_data = DataFrame()
-            captured_metadata = DataFrame()
+            captured_metadata = Series()
             if replacement is not None:
                 for row in range(collapsable.size):
-                    # Found collapsable UID
-                    if collapsable.iat[row] > 0:
-                        captured_data = concat([captured_data, self.data.iloc[row:row+collapsable.iat[row]]])
-                        captured_metadata = concat([captured_metadata, self.metadata.iloc[row:row+collapsable.iat[row]]])
-                        continue
-                    # If it is not a collapsable UID, see if we have captured some data to insert a heading row
-                    elif not captured_data.empty or not captured_metadata.empty:
-                        collapsable_chunk_metadata = {
-                            "Collapsed Rows": {
-                                "Collapsed Rows": captured_data,
-                                "From-To Indexes": (captured_data.index[0], captured_data.index[-1]),
-                                "Collapsed in Total": len(captured_data),
+                    current_uid = collapsable.iat[row]
+                    # If starting a new capture
+                    if current_uid > 0 and captured_uid == 0:
+                        captured_uid = current_uid
+                        captured_data = concat([captured_data, self.data.iloc[[row]]], copy=True)
+                        captured_metadata = concat([captured_metadata, self.metadata.iloc[[row]]], copy=True)
+                    # If continuing the current capture
+                    elif current_uid == captured_uid and captured_uid != 0:
+                        captured_data = concat([captured_data, self.data.iloc[[row]]], copy=True)
+                        captured_metadata = concat([captured_metadata, self.metadata.iloc[[row]]], copy=True)
+                    # If ending a capture (UID changes or goes to 0)
+                    elif captured_uid != 0 and (current_uid != captured_uid or current_uid == 0):
+                        # Finalize the captured group
+                        if not captured_data.empty and not captured_metadata.empty:
+                            if isinstance(replacement, str):
+                                message_value = replacement.replace("{count}", str(len(captured_data)))
+                            else:
+                                message_value = replacement[captured_data.index[0]:captured_data.index[-1]+1].drop_duplicates().values[-1]
+                            # Get the first index of the captured data
+                            first_index = captured_data.index[0]
+                            # Store the captured data and metadata in collapsed_rows
+                            self.collapsed_rows[first_index] = (captured_data.copy(), captured_metadata.copy())
+                            # Drop data and metadata rows of captured data
+                            self.data = self.data.drop(captured_data.index)
+                            self.metadata = self.metadata.drop(captured_metadata.index)
+                            # Replace values at the first index with the collapse heading
+                            self.data.loc[first_index] = [""]*len(self.data.columns)
+                            self.metadata.loc[first_index] = dict()
+                            # Order properly after dropping and adding rows
+                            self.data = self.data.sort_index()
+                            self.metadata = self.metadata.sort_index()
+                            # Update data and metadata for collapsing header
+                            self.data.at[first_index, RColNameNS.Message] = message_value
+                            self.metadata.at[first_index] = {
+                                RMetaNS.CollapsedRows.name: {
+                                    RMetaNS.CollapsedRows.CollapsedRows: captured_data.copy(),
+                                    RMetaNS.CollapsedRows.FromToIndexes: (captured_data.index[0], captured_data.index[-1]),
+                                    RMetaNS.CollapsedRows.CollapsedInTotal: len(captured_data)
+                                }
                             }
-                        }
-                        # Clear captured data from self.data
-                        self.data = self.data.drop(captured_data.index)
-                        # Insert heading row in the index of the first captured element
-                        # If replacement is a string, use it with {count} replaced by the number of collapsed rows
-                        # If replacement is a Series, use the last string set within the captured rows
-                        self.data.insert(captured_data.index[0], RColNameNS.Message,
-                            replacement.replace("{count}", str(len(captured_data))) if isinstance(replacement, str) else \
-                            replacement[captured_data.index[0]:captured_data.index[-1]].values.unique()[-1]
-                        )
-                        # Clear captured metadata from self.metadata
-                        self.metadata = self.metadata.drop(captured_metadata.index)
-                        # Replace metadata with collapsable metadata
-                        self.metadata.at[captured_metadata.index[0]] = collapsable_chunk_metadata
-                        # Save captured data and metadata
-                        self.collapsed_rows[captured_data.index[0]] = (captured_data, captured_metadata)
-                        # Clear captured data and metadata
+                        # Reset for next capture
+                        captured_uid = 0
                         captured_data = DataFrame()
-                        captured_metadata = DataFrame()
+                        captured_metadata = Series()
+                        # If new UID is starting, start capturing
+                        if current_uid > 0:
+                            captured_uid = current_uid
+                            captured_data = concat([captured_data, self.data.iloc[[row]]], copy=True)
+                            captured_metadata = concat([captured_metadata, self.metadata.iloc[[row]]], copy=True)
+                # Finalize any remaining capture at the end
+                if captured_uid != 0 and not captured_data.empty and not captured_metadata.empty:
+                    if isinstance(replacement, str):
+                        message_value = replacement.replace("{count}", str(len(captured_data)))
+                    else:
+                        message_value = replacement[captured_data.index[0]:captured_data.index[-1]+1].drop_duplicates().values[-1]
+                    first_index = captured_data.index[0]
+                    self.collapsed_rows[first_index] = (captured_data.copy(), captured_metadata.copy())
+                    self.data = self.data.drop(captured_data.index)
+                    self.metadata = self.metadata.drop(captured_metadata.index)
+                    self.data.loc[first_index] = [""]*len(self.data.columns)
+                    self.metadata.loc[first_index] = dict()
+                    self.data = self.data.sort_index()
+                    self.metadata = self.metadata.sort_index()
+                    self.data.at[first_index, RColNameNS.Message] = message_value
+                    self.metadata.at[first_index] = {
+                        RMetaNS.CollapsedRows.name: {
+                            RMetaNS.CollapsedRows.CollapsedRows: captured_data.copy(),
+                            RMetaNS.CollapsedRows.FromToIndexes: (captured_data.index[0], captured_data.index[-1]),
+                            RMetaNS.CollapsedRows.CollapsedInTotal: len(captured_data)
+                        }
+                    }
             else:
                 raise ValueError("Replacement cannot be None. We cannot simply hide rows without a way to indicate they are collapsed.")
         return self

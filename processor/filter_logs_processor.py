@@ -4,7 +4,7 @@ from typing import List
 
 from processor.processor_intf import IProcessor
 from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn, MetadataColumn, CollapsingRowsColumn
-from logs_managing.logs_column_types import PREDEFINED_COLUMN_NAMES, PREDEFINED_METADATA_CATEGORIES
+from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
 from util.presets_manager import PresetsManager
@@ -18,7 +18,6 @@ class FilterLogsProcessor(IProcessor):
                 Config("filter_pattern", [], type_of=list, element_type=str),
                 Config("contextualize_lines", CONTEXTUALIZE_LINES_ENUM, type_of=Enum),
                 Config("contextualize_lines_count", 5, type_of=int),
-                Config("keep_hidden_logs", True, type_of=bool),
                 presetsmanager=PresetsManager("filter")
             )
     
@@ -26,11 +25,10 @@ class FilterLogsProcessor(IProcessor):
     def process(self, data,
                 filter_pattern_arg:list|None=None,
                 contextualize_lines_count_arg:int|None=None,
-                contextualize_lines_type_arg:CONTEXTUALIZE_LINES_ENUM|None=None,
-                keep_hidden_logs_arg:bool|None=None) -> List[COLUMN_TYPE]|None:
+                contextualize_lines_type_arg:CONTEXTUALIZE_LINES_ENUM|None=None) -> List[COLUMN_TYPE]|None:
         if not isinstance(data, DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
-        if data.empty or PREDEFINED_COLUMN_NAMES.MESSAGE.value not in data.columns:
+        if data.empty or RColNameNS.Message not in data.columns:
             return None
         
         if filter_pattern_arg is not None:
@@ -50,7 +48,7 @@ class FilterLogsProcessor(IProcessor):
                 if pattern_column == "" and pattern == "":
                     continue
                 elif pattern_column == "":
-                    pattern_column = PREDEFINED_COLUMN_NAMES.MESSAGE.value
+                    pattern_column = RColNameNS.Message
                 if pattern_column not in data.columns:
                     continue
                 data[FILTERED_LINE] |= data[pattern_column].astype(str).str.contains(pattern.strip(), regex=True, na=False)
@@ -87,13 +85,9 @@ class FilterLogsProcessor(IProcessor):
                 mask.iloc[start:end+1] = True
             data[FILTERED_LINE] = mask
 
-        if keep_hidden_logs_arg is None:
-            keep_hidden_logs = CfgMan().get(CfgMan().r.filter_logs.keep_hidden_logs, True)
-        else:
-            keep_hidden_logs = keep_hidden_logs_arg
-
+        # Invert for the "True" to represent filtered rows
+        data[FILTERED_LINE] = ~data[FILTERED_LINE]
         # Return collapsing rows column if we are keeping hidden logs, otherwise just filter them out
-        collapse_pattern = "< Filtered {count} row(s)>" if keep_hidden_logs else None
         result = []
-        result.append(CollapsingRowsColumn(data[FILTERED_LINE], collapse_heading_pattern=collapse_pattern))
+        result.append(CollapsingRowsColumn(data[FILTERED_LINE], collapse_heading_pattern="< Filtered {count} row(s)>"))
         return result

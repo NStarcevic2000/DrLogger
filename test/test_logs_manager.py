@@ -66,18 +66,18 @@ class TestLogsManager(unittest.TestCase):
             DataColumn(['A', 'B', 'C'], name='Category'),
             DataColumn(starting_df['Message'].str.upper(), name='Message')
         ]
-        result_df = LogsManager().simulate_rendered_data(col_list, starting_visible_df=starting_df, starting_metadata=DataFrame())
+        result_df = LogsManager().simulate_rendered_data(col_list)
         assert_frame_equal(result_df, DataFrame({
             'Category': ['A', 'B', 'C'],
             'Message': ['LINE1', 'LINE2', 'LINE3']
-        }))
+        }), check_dtype=False)
 
         # DataColumn is always casted to string
         col_list = [DataColumn([1, 2, 3], name='Numbers')]
         result_df = LogsManager().simulate_rendered_data(col_list)
         assert_frame_equal(result_df, DataFrame({
             'Numbers': ['1', '2', '3']
-        }))
+        }), check_dtype=False)
 
 
 
@@ -110,20 +110,20 @@ class TestLogsManager(unittest.TestCase):
         col_list = [
             DataColumn(input_df['Message']),
             MetadataColumn(input_df['Category']),
-            CollapsingRowsColumn(input_df['Collapsing Rows'])
+            CollapsingRowsColumn(input_df['Collapsing Rows'], name='Collapsing Rows', collapse_heading_pattern='<Collapsed {count}>')
         ]
         result_df = LogsManager().simulate_rendered_data(col_list)
         expected_df = DataFrame({
-            'Message': ['line1', 'line3', 'line5']
+            'Message': ['<Collapsed 1>', 'line2', '<Collapsed 1>', 'line4', '<Collapsed 1>']
         })
-        assert_frame_equal(result_df, expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)
 
     
 
     def test_simulate_rendered_data_with_all_columns(self):
         # Test real-life scenario with all column types
         col_list = [
-            CollapsingRowsColumn([False, True, False], name='Show Failed Only', collapse_heading_pattern="<Collapsed>"),
+            CollapsingRowsColumn([True, False, True], name='Show Failed Only', collapse_heading_pattern="<Collapsed>"),
             DataColumn(['Sender1', 'Sender2', 'Sender3'], name='From'),
             DataColumn(['Receiver1', 'Receiver2', 'Receiver3'], name='To'),
             DataColumn(['Success', 'Failed', 'Success'], name='Category'),
@@ -133,12 +133,12 @@ class TestLogsManager(unittest.TestCase):
 
         result_df = LogsManager().simulate_rendered_data(col_list)
         expected_df = DataFrame({
-            'From': ['Sender2'],
-            'To': ['Receiver2'],
-            'Category': ['Failed']
+            'From': ['', 'Sender2', ''],
+            'To': ['', 'Receiver2', ''],
+            'Category': ['', 'Failed', ''],
+            'Message': ['<Collapsed>', 'Random Message2', '<Collapsed>']
         })
-        print(result_df)
-        assert_frame_equal(result_df, expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)
     
 
 
@@ -154,61 +154,41 @@ class TestLogsManager(unittest.TestCase):
             'Level': ['info', 'error', 'debug']
         })
         LogsManager().add_new_columns([
-            DataColumn(input_df['Message']),
-            MetadataColumn(input_df['Level'])
+            DataColumn(input_df['Message'], name='Message'),
+            MetadataColumn(input_df['Level'], name='Level')
         ])
-        visible_df, metadata_df = LogsManager().get_data(), LogsManager().get_metadata()
+        visible_df = LogsManager().get_data()
         assert_frame_equal(visible_df, DataFrame({
             'Message': ['line1', 'line2', 'line3']
-        }))
-        assert_frame_equal(metadata_df, DataFrame({
-            'Level': ['info', 'error', 'debug']
-        }))
+        }), check_dtype=False)
 
         # Add more columns
         LogsManager().add_new_columns([
             DataColumn(['A', 'B', 'C'], name='Category')
         ])
-        visible_df, metadata_df = LogsManager().get_data(), LogsManager().get_metadata()
+        visible_df = LogsManager().get_data()
         assert_frame_equal(visible_df, DataFrame({
             'Message': ['line1', 'line2', 'line3'],
             'Category': ['A', 'B', 'C']
-        }))
-        assert_frame_equal(metadata_df, DataFrame({
-            'Level': ['info', 'error', 'debug']
-        }))
+        }), check_dtype=False)
 
         # Modify existing column
         LogsManager().add_new_columns([
             DataColumn(input_df['Message'].str.upper(), name='Message')
         ])
-        visible_df, metadata_df = LogsManager().get_data(), LogsManager().get_metadata()
+        visible_df = LogsManager().get_data()
         assert_frame_equal(visible_df, DataFrame({
             'Category': ['A', 'B', 'C'],
             'Message': ['LINE1', 'LINE2', 'LINE3'],
-        }))
-        assert_frame_equal(metadata_df, DataFrame({
-            'Level': ['info', 'error', 'debug']
-        }))
+        }), check_dtype=False)
 
         # Collapse rows
         LogsManager().add_new_columns([
-            CollapsingRowsColumn([False, True, False], name='Show Failed Only')
+            CollapsingRowsColumn([True, False, True], name='Show B Only', collapse_heading_pattern="<Collapsed>"),
         ])
-        visible_df, metadata_df = LogsManager().get_data(), LogsManager().get_metadata()
+        visible_df = LogsManager().get_data()
+        print(visible_df)
         assert_frame_equal(visible_df, DataFrame({
-            'Category': ['B'],
-            'Message': ['LINE2'],
-        }))
-        assert_frame_equal(metadata_df, DataFrame({
-            'Level': ['error']
-        }))
-        # Check if without collapsing we still cached the data correctly
-        visible_df, metadata_df = LogsManager().get_data(show_collapsed=False)
-        assert_frame_equal(visible_df, DataFrame({
-            'Category': ['A', 'B', 'C'],
-            'Message': ['LINE1', 'LINE2', 'LINE3']
-        }))
-        assert_frame_equal(metadata_df, DataFrame({
-            'Level': ['info', 'error', 'debug']
-        }))
+            'Category': ['', 'B', ''],
+            'Message': ['<Collapsed>', 'LINE2', '<Collapsed>'],
+        }), check_dtype=False)

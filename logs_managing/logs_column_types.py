@@ -51,8 +51,10 @@ class MetadataColumn(Series):
         if isinstance(data, Series):
             if data.name is not None:
                 super().__init__(data, name=data.name)
-            else:
+            elif name is not None:
                 super().__init__(data, name=name)
+            else:
+                raise ValueError("MetadataColumn Series must have a name or col_name specified.")
         elif isinstance(data, list):
             super().__init__(data, name=name)
         else:
@@ -107,7 +109,7 @@ class CollapsingRowsColumn(Series):
                     self[idx] = uid
                 else:
                     uid += 1
-        logs_container.set_collapsable(self.astype(int), self.name)
+        logs_container.set_collapsable(self.astype(int, copy=True), self.collapse_heading_pattern)
         return
 
 # class ConnectionColumn(Series):

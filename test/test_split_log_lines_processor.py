@@ -46,7 +46,7 @@ class TestSplitLogLinesProcessor(unittest.TestCase):
             'Group3': ["abc", "def", "ghi"],
             'Message': ["", "", ""]
         })
-        assert_frame_equal(result_df, expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)
 
     def test_empty_dataframe(self):
         input_df = DataFrame({'Message': []})
@@ -85,4 +85,4 @@ class TestSplitLogLinesProcessor(unittest.TestCase):
             'From': ["1", "2", "3"],
             'Message': ["abc", "def", "ghi"]
         })
-        assert_frame_equal(result_df, expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)

@@ -15,21 +15,15 @@ class LogsManager():
 
     def erase_data(self):
         self.columns = []
-        self.cached_columns = []
-        self.cached_df = DataFrame()
+        self.logs_container.clear()
 
     def add_new_columns(self, new_columns:List[COLUMN_TYPE]):
         ''' Update the current columns with new columns from a processing stage.'''
-        # Check for columns that require unique names and remove old ones
         for col in new_columns:
-            if type(col) not in UNIQUE_NAME_COLUMNS:
-                self.columns.append(col)
-                continue
-            for search_col in self.columns:
-                if col.name == search_col.name and type(col) == type(search_col):
-                    self.columns.remove(search_col)
             self.columns.append(col)
-            self.__apply_process(col)
+            print(f"Added column '{col.name}' of type {col.__class__.__name__}")
+        self.__apply_process(new_columns)
+        self.__apply_post_process(new_columns)
 
     def __apply_process(self,
                         columns: list[COLUMN_TYPE],
@@ -41,11 +35,11 @@ class LogsManager():
             @param columns: List of columns to process
             @param ordered_column_types: Order in which to apply processing
         '''
-        if logs_container is None:
-            logs_container = self.logs_container
+        print(f"Applying processing for columns:{[col.name for col in columns]}")
         for col_type in ordered_column_types:
             for col in [x for x in columns if isinstance(x, col_type)]:
-                col.process(logs_container)
+                print(f"Processing column '{col.name}' of type {col.__class__.__name__}")
+                col.process(logs_container) if logs_container is not None else col.process(self.logs_container)
 
     def __apply_post_process(self,
                              columns: list[COLUMN_TYPE],
@@ -57,11 +51,9 @@ class LogsManager():
             @param columns: List of columns to apply post-processing to
             @param ordered_column_types: Order in which to apply post-processing
         '''
-        if logs_container is None:
-            logs_container = self.logs_container
         for col_type in ordered_column_types:
             for col in [x for x in columns if isinstance(x, col_type)]:
-                col.post_process(logs_container)
+                col.post_process(logs_container) if logs_container is not None else  col.post_process(self.logs_container)
 
     def get_columns(self) -> list[COLUMN_TYPE]:
         return self.columns.copy()

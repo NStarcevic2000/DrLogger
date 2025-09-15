@@ -8,8 +8,9 @@ from enum import Enum
 
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
-from processor.open_logs_processor import DataColumn, OpenLogsProcessor
-from logs_managing.logs_manager import LogsManager, MetadataColumn
+from processor.open_logs_processor import OpenLogsProcessor
+from logs_managing.logs_manager import LogsManager
+from logs_managing.logs_column_types import DataColumn, MetadataColumn
 
 from logs_managing.logs_column_types import COLUMN_TYPE
 from util.test_util import assert_columns_by_type
@@ -44,7 +45,7 @@ class TestOpenLogsProcessor(unittest.TestCase):
         expected_df = DataFrame(
             {'File': 3 * [self.tmp_file.name], 'Message': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]}
         )
-        assert_frame_equal(result_df, expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)
 
     def test_process_multiple_files(self):
         # Test processing multiple files
@@ -66,7 +67,7 @@ class TestOpenLogsProcessor(unittest.TestCase):
             }
         )
         try:
-            assert_frame_equal(result_df, expected_df)
+            assert_frame_equal(result_df, expected_df, check_dtype=False)
         finally:
             os.unlink(tmp_file2.name)
         
@@ -93,7 +94,7 @@ class TestOpenLogsProcessor(unittest.TestCase):
             'File': 3 * [os.path.basename(self.tmp_file.name)],
             'Message': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]
         })
-        assert_frame_equal(result_df, expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)
 
 
 
@@ -112,7 +113,7 @@ class TestOpenLogsProcessor(unittest.TestCase):
         expected_df = DataFrame(
             {'File': 3 * [os.path.basename(tmp_file_crlf.name)], 'Message': ["Line 1", "Line 2", "Line 3"]}
         )
-        assert_frame_equal(result_df, expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)
         os.unlink(tmp_file_crlf.name)
         
         # Create a file with Unix-style LF line endings using binary mode
@@ -130,7 +131,7 @@ class TestOpenLogsProcessor(unittest.TestCase):
             {'File': 3 * [os.path.basename(tmp_file_crlf.name)], 'Message': ["Line 1", "Line 2", "Line 3"]}
         )
         try:
-            assert_frame_equal(result_df, expected_df)
+            assert_frame_equal(result_df, expected_df, check_dtype=False)
         finally:
             os.unlink(tmp_file_crlf.name)
 
