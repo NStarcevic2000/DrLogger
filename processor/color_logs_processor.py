@@ -1,8 +1,10 @@
 from pandas import DataFrame
 
 from processor.processor_intf import IProcessor
-from logs_managing.logs_column_types import MetadataColumn, PREDEFINED_COLUMN_NAMES as PCN
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
+from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
+from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
+from logs_managing.logs_column_types import MetadataColumn
 from util.presets_manager import PresetsManager
 
 
@@ -18,7 +20,7 @@ class ColorLogsProcessor(IProcessor):
                 color_scheme_arg:list|None=None) -> list[MetadataColumn]|None:
         if not isinstance(data, DataFrame) or data.empty:
             return None
-        if PCN.MESSAGE.value not in data.columns:
+        if RColNameNS.Message not in data.columns:
             return None
         
         if color_scheme_arg is not None:
@@ -27,8 +29,8 @@ class ColorLogsProcessor(IProcessor):
             color_scheme = CfgMan().get(CfgMan().r.color_logs.color_scheme, [])
 
         # Initialize columns with default colors
-        data[PCN.FOREGROUND.value] = "#000000"
-        data[PCN.BACKGROUND.value] = "#FFFFFF"
+        data["Foreground"] = "#000000"
+        data["Background"] = "#FFFFFF"
         for entry in color_scheme:
             if not isinstance(entry, list):
                 continue  # skip invalid color scheme entries
@@ -45,7 +47,7 @@ class ColorLogsProcessor(IProcessor):
             else:
                 continue
             if foreground:
-                data.loc[data["mask"], PCN.FOREGROUND.value] = foreground
+                data.loc[data["mask"], "Foreground"] = foreground
             if background:
-                data.loc[data["mask"], PCN.BACKGROUND.value] = background
-        return [MetadataColumn(data[PCN.FOREGROUND.value]), MetadataColumn(data[PCN.BACKGROUND.value])]
+                data.loc[data["mask"], "Background"] = background
+        return [MetadataColumn(data["Foreground"]), MetadataColumn(data["Background"])]

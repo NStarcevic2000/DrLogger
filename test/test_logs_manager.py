@@ -110,7 +110,7 @@ class TestLogsManager(unittest.TestCase):
         col_list = [
             DataColumn(input_df['Message']),
             MetadataColumn(input_df['Category']),
-            CaptureMessageColumn(input_df['Collapsing Rows'], replace='<Collapsed {count}>')
+            CaptureMessageColumn(input_df['Collapsing Rows'], name="Collapsing Rows", replace='<Collapsed {count}>')
         ]
         result_df = LogsManager().simulate_rendered_data(col_list)
         expected_df = DataFrame({
@@ -123,7 +123,7 @@ class TestLogsManager(unittest.TestCase):
     def test_simulate_rendered_data_with_all_columns(self):
         # Test real-life scenario with all column types
         col_list = [
-            CaptureMessageColumn([None, 'Random Message2', None], replace="<Collapsed>"),
+            CaptureMessageColumn([None, 'Random Message2', None], name="Collapsing Rows", replace="<Collapsed>"),
             DataColumn(['Sender1', 'Sender2', 'Sender3'], name='From'),
             DataColumn(['Receiver1', 'Receiver2', 'Receiver3'], name='To'),
             DataColumn(['Success', 'Failed', 'Success'], name='Category'),
@@ -146,7 +146,7 @@ class TestLogsManager(unittest.TestCase):
             DataColumn(['1', '2', '3', '4', '5', '6'], name='Numbers'),
             MetadataColumn(['Success', 'Failed', 'Success', 'Failed', 'Success', 'Failed'], name='Category'),
             DataColumn(['Message1', 'Message2', 'Message3', 'Message4', 'Message5', 'Message6'], name='Message'),
-            CaptureMessageColumn([None, None, '<Special Override Message>', 'Message4', 'Message5', None], replace="<Collapsed>"),
+            CaptureMessageColumn([None, None, '<Special Override Message>', 'Message4', 'Message5', None], name="Collapsing Rows", replace="<Collapsed>"),
         ]
         result_df = LogsManager().simulate_rendered_data(col_list)
         expected_df = DataFrame({
@@ -201,7 +201,7 @@ class TestLogsManager(unittest.TestCase):
 
         # Collapse rows
         LogsManager().add_new_columns([
-            CaptureMessageColumn([None, 'LINE2', None], replace="<Collapsed>"),
+            CaptureMessageColumn([None, 'LINE2', None], name="Collapsing Rows", replace="<Collapsed>"),
         ])
         visible_df = LogsManager().get_data()
         print(visible_df)

@@ -71,7 +71,7 @@ class FilterLogsProcessor(IProcessor):
         # Contextualize lines
         if contextualize_lines_count > 0 and contextualize_lines_type != CONTEXTUALIZE_LINES_ENUM.NONE:
             show_indices = data.index[data[FILTERED_LINE]]
-            mask = Series(False, index=data.index)
+            mask = data[FILTERED_LINE].copy()
             for idx in show_indices:
                 if contextualize_lines_type == CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE:
                     start = max(idx - contextualize_lines_count, data.index[0])
@@ -85,9 +85,11 @@ class FilterLogsProcessor(IProcessor):
                 mask.iloc[start:end+1] = True
             data[FILTERED_LINE] = mask
 
-        # Invert for the "True" to represent filtered rows
-        data[FILTERED_LINE] = ~data[FILTERED_LINE]
+        # Every False in FILTERED_LINE means we want to filter it out, so set those to NONE
+        data[RColNameNS.Message] = data.apply(
+            lambda row: None if row[FILTERED_LINE]==False else row[RColNameNS.Message], axis=1
+        )
         # Return collapsing rows column if we are keeping hidden logs, otherwise just filter them out
         result = []
-        result.append(CaptureMessageColumn(data[FILTERED_LINE], name='Filtered Rows', replace="<Filtered {count} row(s)>"))
+        result.append(CaptureMessageColumn(data[RColNameNS.Message], name="Filter", replace="<Filtered {count} row(s)>"))
         return result

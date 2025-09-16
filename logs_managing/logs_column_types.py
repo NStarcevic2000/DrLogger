@@ -86,15 +86,18 @@ class CaptureMessageColumn(Series):
     '''
     def __init__(self,
                  data:Series,
+                 name:str,
                  replace:str=None):
         if isinstance(data, Series) and all(isinstance(val, str) or val is None for val in data):
-            super().__init__(data, name=RColNS.Message)
+            super().__init__(data, name=name)
         elif isinstance(data, list) and all(isinstance(val, str) or val is None for val in data):
-            super().__init__(data, name=RColNS.Message)
+            super().__init__(data, name=name)
         else:
             raise ValueError("CaptureMessageColumn must be initialized with a pandas Series or list.")
         if not all(isinstance(val, str) or val is None for val in self):
             raise ValueError("CaptureMessageColumn Series must contain only strings or None.")
+        if self.name is None:
+            raise ValueError("CaptureMessageColumn Series must have a name specified.")
         self.__replace = replace
 
     @final
