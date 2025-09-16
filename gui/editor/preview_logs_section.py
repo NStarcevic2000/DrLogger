@@ -75,7 +75,6 @@ class PreviewLogsSection(QVBoxLayout):
     def preview_logs_cmd(self):
         def cmd():
             self.preview_logs_table.refresh(
-                CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5),
-                show_collapsed=True
+                CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5)
             )
         self.parent.status_bar.call(cmd)

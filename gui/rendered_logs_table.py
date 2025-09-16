@@ -6,9 +6,10 @@ from pandas import DataFrame, Series
 
 from util.config_store import ConfigManager as CfgMan
 from logs_managing.logs_manager import LogsManager
-from logs_managing.logs_column_types import RESERVED_COLUMN_NAMES_NAMESPACE as RColNameNS
+from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
+from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
+from logs_managing.metadata_utils import get_style_from_metadata
 from processor.processor_manager import ProcessorManager
-
 
 class LogsTableModel(QAbstractTableModel):
     ''' Table model for displaying logs with metadata support. 
@@ -17,18 +18,16 @@ class LogsTableModel(QAbstractTableModel):
     ''' 
     def __init__(self,
                  data: DataFrame=None,
-                 metadata: Series[dict]=None,
-                 colapsable: Series[tuple[DataFrame, DataFrame]]=None):
+                 styles: Series=None):
         super().__init__()
         self._visible_data = None
-        self._metadata = None
-        self._colapsable = None
-        self.update_model_data(data, metadata, colapsable)
+        self._styles = None
+        self.update_model_data(data, styles)
 
-    def rowCount(self, parent=None):
+    def rowCount(self, _=None):
         return len(self._visible_data)
 
-    def columnCount(self, parent=None):
+    def columnCount(self, _=None):
         return len(self._visible_data.columns)
 
     def data(self, index, role=Qt.DisplayRole):
@@ -40,14 +39,14 @@ class LogsTableModel(QAbstractTableModel):
             return str(self._visible_data.iloc[index.row(), index.column()])
         # Foreground role = use metadata column if available
         elif role == Qt.ForegroundRole:
-            fg = self._metadata.iloc[index.row()]["Foreground Color"] if "Foreground Color" in self._metadata.columns else None
+            fg = self._styles.iloc[index.row()][RMetaNS.General.name][RMetaNS.General.ForegroundColor]
             if fg:
                 return QColor(fg)
             else:
                 return QColor("#000000")
         # Background role = use metadata column if available
         elif role == Qt.BackgroundRole:
-            bg = self._metadata.iloc[index.row()]["Background Color"] if "Background Color" in self._metadata.columns else None
+            bg = self._styles.iloc[index.row()][RMetaNS.General.name][RMetaNS.General.BackgroundColor]
             if bg:
                 return QColor(bg)
             else:
@@ -55,6 +54,14 @@ class LogsTableModel(QAbstractTableModel):
         # Text alignment role = left and vertically centered
         elif role == Qt.TextAlignmentRole:
             return Qt.AlignLeft | Qt.AlignVCenter
+        return QVariant()
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return str(self._visible_data.columns[section])
+            elif orientation == Qt.Vertical:
+                return str(self._visible_data.index[section])
         return QVariant()
     
     # If the row is collapsed, show it
@@ -77,8 +84,6 @@ class LogsTableModel(QAbstractTableModel):
         for row in rows:
             self._visible_data.insert(row+1, self._colapsable.at[row][0])
             self._metadata.insert(row+1, self._colapsable.at[row][1])
-
-
         self.endResetModel()
     
     def hide_collapsed(self):
@@ -89,15 +94,13 @@ class LogsTableModel(QAbstractTableModel):
 
     def update_model_data(self,
                     data: DataFrame,
-                    metadata: Series[dict],
-                    colapsable: Series[tuple[DataFrame, DataFrame]]):
+                    styles: Series):
         ''' Update the model with new data, metadata, and collapsable information.
             This will refresh the view automatically.
         '''
         self.beginResetModel()
         self._visible_data = data
-        self._metadata = metadata
-        self._colapsable = colapsable
+        self._styles = styles
         self.endResetModel()
 
 
@@ -123,17 +126,13 @@ class RenderedLogsTable(QTableView):
         self.cached_metadata:DataFrame = DataFrame()
 
     def refresh(self,
-            preview_lines: int | None = None,
-            specific_rows: list[int] | None = None,
-            show_collapsed: bool = False):
+            specific_rows: int | list[int] | None = None):
         ProcessorManager().run()
         self.setUpdatesEnabled(False)
         self.setModel(
             LogsTableModel(
-                *LogsManager().get_data(
-                    rows=preview_lines if specific_rows is None else specific_rows,
-                    show_collapsed=show_collapsed
-                ),
+                LogsManager().get_data(rows=specific_rows),
+                LogsManager().get_style(rows=specific_rows)
             )
         )
         self.resizeColumnsToContents()

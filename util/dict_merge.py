@@ -12,10 +12,12 @@ def merge_dicts(orig, new):
 # Overlay in depth two dictionaries (only right to left merging for keys existing in both dicts)
 def overlay_dict(orig, overlay):
     if not isinstance(orig, dict) or not isinstance(overlay, dict):
-        return overlay
+        return orig
+    result = orig.copy()
     for k, v in overlay.items():
-        if k in orig:
-            orig[k] = overlay_dict(orig[k], v)
-        else:
-            orig[k] = v
-    return orig
+        if k in result:
+            if isinstance(result[k], dict) and isinstance(v, dict):
+                result[k] = overlay_dict(result[k], v)
+            else:
+                result[k] = v
+    return result

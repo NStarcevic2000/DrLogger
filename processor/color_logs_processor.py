@@ -29,8 +29,8 @@ class ColorLogsProcessor(IProcessor):
             color_scheme = CfgMan().get(CfgMan().r.color_logs.color_scheme, [])
 
         # Initialize columns with default colors
-        data["Foreground"] = "#000000"
-        data["Background"] = "#FFFFFF"
+        data[RMetaNS.General.ForegroundColor] = "#000000"
+        data[RMetaNS.General.BackgroundColor] = "#FFFFFF"
         for entry in color_scheme:
             if not isinstance(entry, list):
                 continue  # skip invalid color scheme entries
@@ -47,7 +47,7 @@ class ColorLogsProcessor(IProcessor):
             else:
                 continue
             if foreground:
-                data.loc[data["mask"], "Foreground"] = foreground
+                data.loc[data["mask"], RMetaNS.General.ForegroundColor] = foreground
             if background:
-                data.loc[data["mask"], "Background"] = background
-        return [MetadataColumn(data["Foreground"]), MetadataColumn(data["Background"])]
+                data.loc[data["mask"], RMetaNS.General.BackgroundColor] = background
+        return [MetadataColumn(data[RMetaNS.General.ForegroundColor]), MetadataColumn(data[RMetaNS.General.BackgroundColor])]

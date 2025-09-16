@@ -40,9 +40,9 @@ class LogsContainer():
         if row is None:
             return self.data.copy()
         elif isinstance(row, int):
-            return self.data.iloc[[row]].copy()
+            return self.data.copy().head(row)
         elif isinstance(row, list):
-            return self.data.iloc[row].copy()
+            return self.data.loc[row].copy()
         else:
             raise ValueError("Invalid row index type.")
         
@@ -75,9 +75,9 @@ class LogsContainer():
         if row is None:
             return self.metadata.copy()
         elif isinstance(row, int):
-            return self.metadata.iloc[[row]].copy()
+            return self.metadata.copy().head(row)
         elif isinstance(row, list):
-            return self.metadata.iloc[row].copy()
+            return self.metadata.loc[row].copy()
         else:
             raise ValueError("Invalid row index type.")
 
@@ -111,24 +111,28 @@ class LogsContainer():
         return self
 
     def get_style(self, row:int|list[int]=None) -> Series:
-        style_column = Series(
-            {
-                RMetaNS.General.name: {
-                    RMetaNS.General.ForegroundColor: "#000000",
-                    RMetaNS.General.BackgroundColor: "#FFFFFF",
-                    RMetaNS.General.FontStyle: "normal",
-                }
-            }*len(self.data), name="Style"
-        )
-        style_column = style_column.combine(self.metadata, overlay_dict)
+        style_column = Series([{
+            RMetaNS.General.name: {
+                RMetaNS.General.ForegroundColor: "#000000",
+                RMetaNS.General.BackgroundColor: "#FFFFFF"
+            }
+            }]*len(self.metadata), index=self.metadata.index, name="Style")
+        print(style_column)
+        style_column = style_column.copy().combine(self.metadata.copy(), overlay_dict)
+        print(style_column)
         if row is None:
             return style_column
         elif isinstance(row, int):
-            return style_column.iloc[[row]].copy()
+            return style_column.copy().head(row)
         elif isinstance(row, list):
-            return style_column.iloc[row].copy()
+            return style_column.loc[row].copy()
         else:
             raise ValueError("Invalid row index type.")
+    
+
+
+
+
 
     def __capture(self,
                   captured_header:tuple[int, str],
@@ -150,19 +154,22 @@ class LogsContainer():
             header_str = str(captured_header[1]) if captured_header[1] is not None else "<Undefined>"
             header_str = header_str.replace("{count}", str(len(captured_data))).strip()
             captured_header = (captured_header[0], header_str)
-            # Save captured data and metadata to collapsable
-            self.captured_rows.at[captured_header[0]] = (captured_data.copy(), captured_metadata.copy())
             # Drop all captured rows from data and metadata
             self.data = self.data.drop([idx for idx in captured_data.index if idx != captured_header[0]])
             self.metadata = self.metadata.drop([idx for idx in captured_data.index if idx != captured_header[0]])
             # Merge generated metadata with existing metadata
+            # TODO: Figure out a different way to merge metadata, this is too strict
             self.metadata.at[captured_header[0]] = merge_dicts({
+                RMetaNS.General.name: {
+                    RMetaNS.General.ForegroundColor: "#878787",
+                    RMetaNS.General.BackgroundColor: "#FFFFFF",
+                },
                 RMetaNS.CaptureRows.name: {
                     RMetaNS.CaptureRows.CaptureRows: captured_header[1],
                     RMetaNS.CaptureRows.FromToIndexes: (first_row, last_row),
                     RMetaNS.CaptureRows.CollapsedInTotal: len(captured_data)
                 }
-            }, self.metadata.at[captured_header[0]])
+            }, self.metadata.copy().at[captured_header[0]])
             # Add new row to data with captured header
             self.data.at[captured_header[0], RColNameNS.Message] = captured_header[1]
             # Sort by index to maintain order
@@ -208,14 +215,3 @@ class LogsContainer():
         if not captured_data.empty:
             self.__capture(captured_header, captured_data, captured_metadata)
         return self
-    
-    def get_collapsable(self, row:int|list[int]=None) -> Series:
-        if row is None:
-            return self.captured_rows.copy()
-        elif isinstance(row, int):
-            return self.captured_rows.iloc[[row]].copy()
-        elif isinstance(row, list):
-            return self.captured_rows.iloc[row].copy()
-        else:
-            raise ValueError("Invalid row index type.")
-    

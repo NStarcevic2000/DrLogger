@@ -65,18 +65,16 @@ class LogsManager():
     def get_metadata(self,
                      rows: int | list[int] = None):
         return self.logs_container.get_metadata(rows)
-    
+
     def get_style(self,
-                  rows: int | list[int] = None):
+                   rows: int | list[int] = None):
         return self.logs_container.get_style(rows)
 
     def get_all_packaged(self,
                  rows: int | list[int] = None):
         return (
             self.logs_container.get_data(rows),
-            self.logs_container.get_metadata(rows),
-            self.logs_container.get_style(rows),
-            self.logs_container.get_collapsable(rows)
+            self.logs_container.get_metadata(rows)
         )
 
     # For testing purposes, we might use it somewhere else also

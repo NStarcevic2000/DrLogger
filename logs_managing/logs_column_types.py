@@ -67,7 +67,9 @@ class MetadataColumn(Series):
     @final
     def process(self, logs_container:LogsContainer):
         metadata = Series([{
-            self.name: row_val
+            self.__category: {
+                self.name: row_val
+            },
         } for row_val in self.astype(str)], name=self.name)
         logs_container.set_metadata(metadata)
     

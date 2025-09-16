@@ -95,7 +95,7 @@ class DrLoggerMainWindow(QMainWindow):
     
     def update(self):
         def cmd():
-            self.main_table.refresh(show_collapsed=True)
+            self.main_table.refresh()
         self.status_bar.call(cmd)
 
     def set_QShortcut_action(self, button: str, action: callable):

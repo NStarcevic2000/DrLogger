@@ -8,9 +8,8 @@ RESERVED_COLUMN_NAMES = get_namespaces({
 
 RESERVED_METADATA_NAMES = get_namespaces({
     "General": {
-        "ForegroundColor": "#000000",
-        "BackgroundColor": "#FFFFFF",
-        "FontStyle": "Normal"
+        "ForegroundColor": "Foreground Color",
+        "BackgroundColor": "Background Color"
     },
     "CaptureRows": {
         "CaptureRows": "Collapsed Rows",
@@ -18,4 +17,3 @@ RESERVED_METADATA_NAMES = get_namespaces({
         "CollapsedInTotal": "Collapsed in Total"
     }
 }, str)
-print(RESERVED_METADATA_NAMES)
