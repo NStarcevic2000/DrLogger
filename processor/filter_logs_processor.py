@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List
 
 from processor.processor_intf import IProcessor
-from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn, MetadataColumn, CollapsingRowsColumn
+from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn, MetadataColumn, CaptureMessageColumn
 from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
@@ -89,5 +89,5 @@ class FilterLogsProcessor(IProcessor):
         data[FILTERED_LINE] = ~data[FILTERED_LINE]
         # Return collapsing rows column if we are keeping hidden logs, otherwise just filter them out
         result = []
-        result.append(CollapsingRowsColumn(data[FILTERED_LINE], collapse_heading_pattern="< Filtered {count} row(s)>"))
+        result.append(CaptureMessageColumn(data[FILTERED_LINE], name='Filtered Rows', replace="<Filtered {count} row(s)>"))
         return result

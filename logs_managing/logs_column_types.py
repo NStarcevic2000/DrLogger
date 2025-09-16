@@ -77,24 +77,25 @@ class MetadataColumn(Series):
 
 
 
-class CollapsingRowsColumn(Series):
-    ''' A boolean column that indicates whether the corresponding row should be shown or collapsed.
-        If collapsed [cell value True], the row is hidden from visible_data DataFrame.
+class CaptureMessageColumn(Series):
+    ''' A special column for capturing rows of logs into a singular message.\n
+        Can be initialized as:\n
+        - CaptureMessageColumn(data: Series[str])
+            - data: Series of strings to capture messages from. (modified message column with optional NULLs)
+            - replace: Ignored
     '''
-    def __init__(self, data, name:str=None,
-            collapse_heading_pattern:str=None):
-        # Initialized from Series or list
-        if isinstance(data, Series) and all(isinstance(x, bool) for x in data):
-            if data.name is not None:
-                super().__init__(data, name=data.name)
-            else:
-                super().__init__(data, name=name)
-        elif isinstance(data, list) and all(isinstance(x, bool) for x in data):
-            super().__init__(data, name=name)
+    def __init__(self,
+                 data:Series,
+                 replace:str=None):
+        if isinstance(data, Series) and all(isinstance(val, str) or val is None for val in data):
+            super().__init__(data, name=RColNS.Message)
+        elif isinstance(data, list) and all(isinstance(val, str) or val is None for val in data):
+            super().__init__(data, name=RColNS.Message)
         else:
-            raise ValueError("MetadataColumn must be initialized with a pandas Series or list.")
-        
-        self.collapse_heading_pattern: str|None = collapse_heading_pattern
+            raise ValueError("CaptureMessageColumn must be initialized with a pandas Series or list.")
+        if not all(isinstance(val, str) or val is None for val in self):
+            raise ValueError("CaptureMessageColumn Series must contain only strings or None.")
+        self.__replace = replace
 
     @final
     def process(self, logs_container:LogsContainer):
@@ -102,14 +103,7 @@ class CollapsingRowsColumn(Series):
 
     @final
     def post_process(self, logs_container:LogsContainer):
-        if self.dtype == bool:
-            uid = 1
-            for idx, val in self.items():
-                if val == True:
-                    self[idx] = uid
-                else:
-                    uid += 1
-        logs_container.set_collapsable(self.astype(int, copy=True), self.collapse_heading_pattern)
+        logs_container.set_collapsable(self.copy(), self.__replace)
         return
 
 # class ConnectionColumn(Series):
@@ -117,10 +111,10 @@ class CollapsingRowsColumn(Series):
 #         super().__init__(*args, **kwargs)
 
 
-COLUMN_TYPE = Union[DataColumn, MetadataColumn, CollapsingRowsColumn]
+COLUMN_TYPE = Union[DataColumn, MetadataColumn, CaptureMessageColumn]
 ''' LogsManager column type. '''
 
-ORDERED_COLUMN_TYPES = [DataColumn, MetadataColumn, CollapsingRowsColumn]
+ORDERED_COLUMN_TYPES = [DataColumn, MetadataColumn, CaptureMessageColumn]
 ''' Order in which LogsManager processes column types. '''
 
 UNIQUE_NAME_COLUMNS = [DataColumn]

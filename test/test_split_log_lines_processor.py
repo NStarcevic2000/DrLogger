@@ -7,7 +7,7 @@ from pandas.testing import assert_frame_equal
 
 from processor.split_log_lines_processor import SplitLogLinesProcessor
 from logs_managing.logs_manager import LogsManager
-from logs_managing.logs_column_types import CollapsingRowsColumn, DataColumn, MetadataColumn
+from logs_managing.logs_column_types import CaptureMessageColumn, DataColumn, MetadataColumn
 
 from util.test_util import assert_columns_by_type
 

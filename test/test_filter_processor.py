@@ -7,7 +7,7 @@ from pandas.testing import assert_frame_equal
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
 from processor.filter_logs_processor import FilterLogsProcessor, FILTERED_LINE
 from logs_managing.logs_manager import LogsManager
-from logs_managing.logs_column_types import CollapsingRowsColumn, DataColumn
+from logs_managing.logs_column_types import CaptureMessageColumn, DataColumn, MetadataColumn
 from util.test_util import assert_columns_by_type
 
 class TestFilterLogsProcessor(unittest.TestCase):
@@ -25,20 +25,17 @@ class TestFilterLogsProcessor(unittest.TestCase):
         assert ret_columns is None
 
     def test_process_basic_filtering(self):
-        # Test basic pattern filtering
         input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
         ret_columns = self.processor.process(input_df.copy(),
             filter_pattern_arg=[["Message", "error"]],
             contextualize_lines_count_arg=0,
             contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER
         )
-        expected_columns = [(CollapsingRowsColumn, FILTERED_LINE)]
+        expected_columns = [(CaptureMessageColumn, FILTERED_LINE)]
         assert_columns_by_type(ret_columns, expected_columns)
-        assert [True, False, True] == ret_columns[0].tolist()
         result_df = LogsManager().simulate_rendered_data([
-            DataColumn(input_df['Message'], name='Message'),
-            CollapsingRowsColumn([True, False, True], name='Show Filtered Only', collapse_heading_pattern="<Filtered {count} row(s)>")
-        ])
+            DataColumn(input_df['Message']),
+        ]+ret_columns)
         expected_df = DataFrame({
             'Message': ['<Filtered 1 row(s)>', 'error occurred', '<Filtered 1 row(s)>'],
         })
@@ -52,7 +49,7 @@ class TestFilterLogsProcessor(unittest.TestCase):
             contextualize_lines_count_arg=1,
             contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER
         )
-        expected_columns = [(CollapsingRowsColumn, FILTERED_LINE)]
+        expected_columns = [(CaptureMessageColumn, FILTERED_LINE)]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
             DataColumn(input_df['Message'])
@@ -70,7 +67,7 @@ class TestFilterLogsProcessor(unittest.TestCase):
             contextualize_lines_count_arg=1,
             contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER
         )
-        expected_columns = [(CollapsingRowsColumn, FILTERED_LINE)]
+        expected_columns = [(CaptureMessageColumn, FILTERED_LINE)]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
             DataColumn(input_df['Message'])
@@ -87,14 +84,13 @@ class TestFilterLogsProcessor(unittest.TestCase):
             contextualize_lines_count_arg=0,
             contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.LINES_BEFORE_AND_AFTER
         )
-        expected_columns = [(CollapsingRowsColumn, FILTERED_LINE)]
+        expected_columns = [(CaptureMessageColumn, FILTERED_LINE)]
         assert_columns_by_type(ret_columns, expected_columns)
-        result_df = LogsManager().simulate_rendered_data(
-            ret_columns,
-            starting_visible_df=input_df.copy()
-        )
+        result_df = LogsManager().simulate_rendered_data([
+            DataColumn(input_df['Message'], name='Message')
+        ]+ret_columns)
         expected_df = DataFrame({
-            'Message': ['error occurred'],
+            'Message': ['<Filtered 2 row(s)>', 'error occurred', '<Filtered 2 row(s)>'],
         })
         assert_frame_equal(result_df, expected_df, check_dtype=False)
 
@@ -110,15 +106,15 @@ class TestFilterLogsProcessor(unittest.TestCase):
             contextualize_lines_count_arg=0,
             contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE
         )
-        expected_columns = [(CollapsingRowsColumn, FILTERED_LINE)]
+        expected_columns = [(CaptureMessageColumn, FILTERED_LINE)]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
             DataColumn(input_df['Message']),
             DataColumn(input_df['Type'])
         ]+ret_columns)
         expected_df = DataFrame({
-            'Message': ['line2 warning', 'line3 info'],
-            'Type': ['line2 type2', 'line3 type3']
+            'Message': ['<Filtered 1 row(s)>', 'line2 warning', 'line3 info', '<Filtered 1 row(s)>'],
+            'Type': ['', 'line2 type2', 'line3 type3', '']
         })
         assert_frame_equal(result_df, expected_df, check_dtype=False)
 
@@ -140,7 +136,7 @@ class TestFilterLogsProcessor(unittest.TestCase):
             contextualize_lines_count_arg=0,
             contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE
         )
-        expected_columns = [(CollapsingRowsColumn, FILTERED_LINE)]
+        expected_columns = [(CaptureMessageColumn, FILTERED_LINE)]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
             DataColumn(input_df['Message'])
@@ -158,12 +154,12 @@ class TestFilterLogsProcessor(unittest.TestCase):
             contextualize_lines_count_arg=0,
             contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE
         )
-        expected_columns = [(CollapsingRowsColumn, FILTERED_LINE)]
+        expected_columns = [(CaptureMessageColumn, FILTERED_LINE)]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
             DataColumn(input_df['Message'])
         ]+ret_columns)
-        expected_df = DataFrame({'Message': ['error occurred']})
+        expected_df = DataFrame({'Message': ['<Filtered 1 row(s)>', 'error occurred', '<Filtered 1 row(s)>']})
         assert_frame_equal(result_df, expected_df, check_dtype=False)
     
     def test_process_with_hidden_logs_kept(self):
@@ -173,7 +169,7 @@ class TestFilterLogsProcessor(unittest.TestCase):
             contextualize_lines_count_arg=0,
             contextualize_lines_type_arg=CONTEXTUALIZE_LINES_ENUM.NONE
         )
-        expected_columns = [(CollapsingRowsColumn, FILTERED_LINE)]
+        expected_columns = [(CaptureMessageColumn, FILTERED_LINE)]
         assert_columns_by_type(ret_columns, expected_columns)
         assert ret_columns[0].collapse_heading_pattern is not None
         result_df = LogsManager().simulate_rendered_data(
