@@ -1,0 +1,68 @@
+name: Build DrLogger Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: 'Release branch'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - 'release/v1.0'
+      merge_branch:
+        description: 'Merge from branch'
+        required: true
+        default: 'master'
+        type: string
+
+jobs:
+  build:
+    runs-on: windows-latest
+    continue-on-error: false
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Checkout specific branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.release_branch }}
+          fetch-depth: 0
+        
+      - name: Merge from another branch (locally)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin ${{ github.event.inputs.merge_branch }}
+          git checkout ${{ github.event.inputs.release_branch }}
+          git merge origin/${{ github.event.inputs.merge_branch }} --no-ff -m "Merge branch '${{ github.event.inputs.merge_branch }}' into '${{ github.event.inputs.release_branch }}'"
+          git fetch origin ${{ github.event.inputs.merge_branch }}
+          git merge origin/${{ github.event.inputs.merge_branch }} --no-ff -m "Merge branch '${{ github.event.inputs.merge_branch }}' into '${{ github.event.inputs.release_branch }}'"
+      
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run Tests
+        run: |
+          python -m unittest discover tests
+      
+      - name: Push merged changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          git push origin ${{ github.event.inputs.release_branch }}
+
+      - name: Tag Release
+        run: |
+          branch="${{ github.event.inputs.release_branch }}"
+          build_number=$(printf "%05d" $(( ${{ github.run_number }} + 1 )))
+          tag="build-${build_number}"
+          git tag "$tag"
+          git push origin "$tag"
+    
