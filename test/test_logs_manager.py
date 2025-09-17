@@ -5,6 +5,8 @@ from pandas import DataFrame
 from pandas import Series
 from pandas.testing import assert_frame_equal
 
+from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
+from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 from logs_managing.logs_column_types import CaptureMessageColumn, DataColumn, MetadataColumn
 from logs_managing.logs_manager import LogsManager
 
@@ -154,7 +156,6 @@ class TestLogsManager(unittest.TestCase):
             'Numbers': ['3', '4', '5', '6'],
             'Message': ['<Special Override Message>', 'Message4', 'Message5', '<Collapsed>']
         })
-        print(result_df)
         assert_frame_equal(result_df.reset_index(drop=True), expected_df, check_dtype=False)
     
 
@@ -204,7 +205,6 @@ class TestLogsManager(unittest.TestCase):
             CaptureMessageColumn([None, 'LINE2', None], name="Collapsing Rows", replace="<Collapsed>"),
         ])
         visible_df = LogsManager().get_data()
-        print(visible_df)
         assert_frame_equal(visible_df, DataFrame({
             'Category': ['A', 'B', 'C'],
             'Message': ['<Collapsed>', 'LINE2', '<Collapsed>'],

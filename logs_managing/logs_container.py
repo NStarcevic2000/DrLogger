@@ -1,4 +1,5 @@
 from pandas import DataFrame, Series, concat
+import pandas
 
 from util.dict_merge import merge_dicts, overlay_dict
 
@@ -68,7 +69,7 @@ class LogsContainer():
         elif self.metadata.empty:
             self.metadata = metadata.copy()
         else:
-            self.metadata = self.metadata.combine(metadata, merge_dicts)
+            self.metadata = self.metadata.copy().combine(metadata.copy(), merge_dicts)
         return self
     
     def get_metadata(self, row:int|list[int]=None) -> Series:
@@ -117,9 +118,7 @@ class LogsContainer():
                 RMetaNS.General.BackgroundColor: "#FFFFFF"
             }
             }]*len(self.metadata), index=self.metadata.index, name="Style")
-        print(style_column)
         style_column = style_column.copy().combine(self.metadata.copy(), overlay_dict)
-        print(style_column)
         if row is None:
             return style_column
         elif isinstance(row, int):
@@ -159,7 +158,8 @@ class LogsContainer():
             self.metadata = self.metadata.drop([idx for idx in captured_data.index if idx != captured_header[0]])
             # Merge generated metadata with existing metadata
             # TODO: Figure out a different way to merge metadata, this is too strict
-            self.metadata.at[captured_header[0]] = merge_dicts({
+            self.metadata.at[captured_header[0]] = merge_dicts(self.metadata.copy().at[captured_header[0]],
+            {
                 RMetaNS.General.name: {
                     RMetaNS.General.ForegroundColor: "#878787",
                     RMetaNS.General.BackgroundColor: "#FFFFFF",
@@ -169,7 +169,7 @@ class LogsContainer():
                     RMetaNS.CaptureRows.FromToIndexes: (first_row, last_row),
                     RMetaNS.CaptureRows.CollapsedInTotal: len(captured_data)
                 }
-            }, self.metadata.copy().at[captured_header[0]])
+            })
             # Add new row to data with captured header
             self.data.at[captured_header[0], RColNameNS.Message] = captured_header[1]
             # Sort by index to maintain order

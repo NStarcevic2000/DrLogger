@@ -13,6 +13,7 @@ from util.config_enums import (
 )
 
 from gui.main_window import DrLoggerMainWindow
+import pstats
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     # profiler.enable()
     # viewer.update()
     # profiler.disable()
-    # profiler.print_stats(sort='cumtime')
-    # print(LogsManager().get_rendered_data())
+    # stats = pstats.Stats(profiler).sort_stats('cumtime')
+    # stats.print_stats(20)
 
     sys.exit(app.exec_())

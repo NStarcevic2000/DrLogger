@@ -4,6 +4,7 @@ from pandas.testing import assert_frame_equal, assert_series_equal
 
 from processor.color_logs_processor import ColorLogsProcessor
 from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
+from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 from logs_managing.logs_column_types import MetadataColumn
 from util.test_util import assert_columns_by_type
 
@@ -20,7 +21,7 @@ class TestColorLogsProccessor(unittest.TestCase):
                 [RColNameNS.Message, "line2", "#00FF00", "#0000FF"]
             ]
         )
-        expected_columns = [(MetadataColumn, "Foreground"), (MetadataColumn, "Background")]
+        expected_columns = [(MetadataColumn, RMetaNS.General.ForegroundColor), (MetadataColumn, RMetaNS.General.BackgroundColor)]
         assert_columns_by_type(ret_columns, expected_columns)
         expected_fg = ['#FF0000', '#00FF00', '#000000']
         expected_bg = ['#FFFF00', '#0000FF', '#FFFFFF']
@@ -35,7 +36,7 @@ class TestColorLogsProccessor(unittest.TestCase):
                 [RColNameNS.Message, "nomatch", "#FF0000", "#FFFF00"]
             ]
         )
-        expected_columns = [(MetadataColumn, "Foreground"), (MetadataColumn, "Background")]
+        expected_columns = [(MetadataColumn, RMetaNS.General.ForegroundColor), (MetadataColumn, RMetaNS.General.BackgroundColor)]
         assert_columns_by_type(ret_columns, expected_columns)
         expected_fg = ['#000000', '#000000', '#000000']
         expected_bg = ['#FFFFFF', '#FFFFFF', '#FFFFFF']
@@ -52,7 +53,7 @@ class TestColorLogsProccessor(unittest.TestCase):
                 ["", "beta", "#123456", "#654321"]
             ]
         )
-        expected_columns = [(MetadataColumn, "Foreground"), (MetadataColumn, "Background")]
+        expected_columns = [(MetadataColumn, RMetaNS.General.ForegroundColor), (MetadataColumn, RMetaNS.General.BackgroundColor)]
         assert_columns_by_type(ret_columns, expected_columns)
         expected_fg = ['#000000', '#123456', '#000000']
         expected_bg = ['#FFFFFF', '#654321', '#FFFFFF']
@@ -82,7 +83,7 @@ class TestColorLogsProccessor(unittest.TestCase):
         ret_columns = self.processor.process(input_df.copy(),
             color_scheme_arg=[]
         )
-        expected_columns = [(MetadataColumn, "Foreground"), (MetadataColumn, "Background")]
+        expected_columns = [(MetadataColumn, RMetaNS.General.ForegroundColor), (MetadataColumn, RMetaNS.General.BackgroundColor)]
         assert_columns_by_type(ret_columns, expected_columns)
         expected_fg = ['#000000', '#000000', '#000000']
         expected_bg = ['#FFFFFF', '#FFFFFF', '#FFFFFF']

@@ -59,7 +59,9 @@ class MetadataColumn(Series):
             super().__init__(data, name=name)
         else:
             raise ValueError("MetadataColumn must be initialized with a pandas Series or list.")
-        
+        # Override anything provided by series name
+        if name is not None:
+            self.name = name
         # Category is just a string, but we can use predefined ones
         self.__category = category if category is not None else \
             RMetaNS.General.name
