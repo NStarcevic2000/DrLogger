@@ -52,11 +52,16 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install pyinstaller
           pip install -r requirements.txt
       
       - name: Run Tests
         run: |
           python -m unittest discover test
+      
+      - name: Build Application
+        run: |
+          python -m PyInstaller --onefile --noconsole init.py --name DrLogger
       
       - name: Get latest patch version
         id: get_patch
@@ -96,17 +101,14 @@ jobs:
           release_name: Release "${{ env.NEW_TAG }}"
           draft: false
           prerelease: ${{ github.event.inputs.is_a_prerelease }}
-
-      # - name: Prepare Archive Directory
-      #   run: |
-      #     mkdir build_artifacts
-      #     copy src\*.* build_artifacts\src\
-      #     copy dist\*.exe build_artifacts\
-
-      # - name: Archive Build Artifacts
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: DrLogger-v1.0-${{ github.run_number }}
-      #     path: |
-      #       build_artifacts/*
-      #     overwrite: false
+      
+      - name: Upload Application
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/DrLogger.exe
+          asset_name: DrLogger.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+      
