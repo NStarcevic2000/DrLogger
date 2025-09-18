@@ -62,7 +62,7 @@ jobs:
         id: get_patch
         shell: bash
         run: |
-          prefix="${{ github.event.inputs.merge_branch }}"
+          prefix="${{ github.event.inputs.release_branch }}"
           tags=$(git tag -l "${prefix}.*" | sort -V)
           if [[ -z "$tags" ]]; then
             next_patch=0
