@@ -60,6 +60,7 @@ jobs:
       
       - name: Get latest patch version
         id: get_patch
+        shell: bash
         run: |
           prefix="${{ github.event.inputs.merge_branch }}"
           tags=$(git tag -l "${prefix}.*" | sort -V)
