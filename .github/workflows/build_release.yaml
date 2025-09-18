@@ -6,7 +6,6 @@ on:
       release_branch:
         description: 'Release branch'
         required: true
-        default: 'staging'
         type: choice
         options:
           - 'release/v1.0'
