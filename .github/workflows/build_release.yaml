@@ -74,13 +74,17 @@ jobs:
           new_tag="${prefix}.${next_patch}"
           echo "NEW_TAG=$new_tag" >> $GITHUB_ENV
       
+      - name: Tag Build
+        run: |
+          git tag "${{ env.NEW_TAG }}"
+      
       - name: Push merged changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git push origin ${{ github.event.inputs.release_branch }}
-          git push origin "${{ env.NEW_TAG }}"
+          git push origin "tag/${{ env.NEW_TAG }}"
       
       - name: Publish Release
         id: create_release
