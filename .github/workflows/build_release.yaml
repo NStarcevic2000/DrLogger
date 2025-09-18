@@ -99,9 +99,6 @@ jobs:
         with:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: Release "${{ env.NEW_TAG }}"
-          body: |
-            ## Commits involved
-            ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: ${{ github.event.inputs.is_a_prerelease }}
       
