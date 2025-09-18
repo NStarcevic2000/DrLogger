@@ -1,4 +1,4 @@
-name: Build DrLogger Release
+name: 'Build DrLogger Release'
 
 on:
   workflow_dispatch:
@@ -90,7 +90,6 @@ jobs:
           tag_name: "${{ env.NEW_TAG }}"
           release_name: Release "${{ env.NEW_TAG }}"
           draft: false
-          prerelease: ${{ github.event.inputs.is_a_prerelease }}
           prerelease: ${{ github.event.inputs.is_a_prerelease }}
 
       # - name: Prepare Archive Directory
