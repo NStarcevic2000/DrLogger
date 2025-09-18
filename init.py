@@ -36,7 +36,7 @@ if __name__ == "__main__":
     # profiler.enable()
     # viewer.update()
     # profiler.disable()
-    # stats = pstats.Stats(profiler).sort_stats('cumtime')
-    # stats.print_stats(20)
+    # stats = pstats.Stats(profiler).sort_stats('cumtime').print_callees('__capture')
+            
 
     sys.exit(app.exec_())

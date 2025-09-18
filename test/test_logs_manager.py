@@ -118,6 +118,7 @@ class TestLogsManager(unittest.TestCase):
         expected_df = DataFrame({
             'Message': ['<Collapsed 2>', 'line3', '<Collapsed 2>']
         })
+        print(result_df)
         assert_frame_equal(result_df.reset_index(drop=True), expected_df, check_dtype=False)
 
     
