@@ -76,7 +76,7 @@ jobs:
       
       - name: Tag Build
         run: |
-          git tag "${{ env.NEW_TAG }}"
+          git tag "tag/${{ env.NEW_TAG }}"
       
       - name: Push merged changes
         env:
