@@ -43,6 +43,8 @@ jobs:
           git fetch origin ${{ github.event.inputs.merge_branch }}
           git checkout ${{ github.event.inputs.release_branch }}
           git merge origin/${{ github.event.inputs.merge_branch }} --no-ff --commit -m "Merge branch '${{ github.event.inputs.merge_branch }}' into '${{ github.event.inputs.release_branch }}'"
+          # Create a tag on a remote branch
+          git tag -a "v1.0-${{ github.run_number }}" -m "Release version v1.0-${{ github.run_number }}"
       
       - name: Install Dependencies
         run: |
@@ -59,12 +61,18 @@ jobs:
         run: |
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git push origin ${{ github.event.inputs.release_branch }}
+          git push origin "v1.0-${{ github.run_number }}"
+      
+      # - name: Prepare Archive Directory
+      #   run: |
+      #     mkdir build_artifacts
+      #     copy src\*.* build_artifacts\src\
+      #     copy dist\*.exe build_artifacts\
 
-      - name: Tag Release
-        run: |
-          branch="${{ github.event.inputs.release_branch }}"
-          build_number=$(printf "%05d" $(( ${{ github.run_number }} + 1 )))
-          tag="build-${build_number}"
-          git tag "$tag"
-          git push origin "$tag"
-    
+      # - name: Archive Build Artifacts
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: DrLogger-v1.0-${{ github.run_number }}
+      #     path: |
+      #       build_artifacts/*
+      #     overwrite: false
