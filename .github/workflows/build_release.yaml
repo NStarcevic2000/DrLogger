@@ -40,16 +40,15 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-            git fetch origin ${{ github.event.inputs.merge_branch }}
-            git checkout ${{ github.event.inputs.release_branch }}
-            REM Check if there is anything to merge
-            git merge-base --is-ancestor origin/${{ github.event.inputs.merge_branch }} HEAD
-            if %ERRORLEVEL%==0 (
-            echo Nothing to merge from '%{{ github.event.inputs.merge_branch }}%' into '%{{ github.event.inputs.release_branch }}%'.
-            exit /b 1
-            ) else (
-            git merge origin/${{ github.event.inputs.merge_branch }} --no-ff -m "Merge branch '%{{ github.event.inputs.merge_branch }}%' into '%{{ github.event.inputs.release_branch }}%'"
-            )
+          git fetch origin ${{ github.event.inputs.merge_branch }}
+          git checkout ${{ github.event.inputs.release_branch }}
+          # Check if there is anything to merge
+          if git merge-base --is-ancestor origin/${{ github.event.inputs.merge_branch }} HEAD; then
+            echo "Nothing to merge from '${{ github.event.inputs.merge_branch }}' into '${{ github.event.inputs.release_branch }}'."
+            exit 1
+          else
+            git merge origin/${{ github.event.inputs.merge_branch }} --no-ff -m "Merge branch '${{ github.event.inputs.merge_branch }}' into '${{ github.event.inputs.release_branch }}'"
+          fi
       
       - name: Install Dependencies
         run: |
