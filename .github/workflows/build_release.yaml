@@ -42,12 +42,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin ${{ github.event.inputs.merge_branch }}
           git checkout ${{ github.event.inputs.release_branch }}
-          # Check if there is anything to merge
-          if (git merge-base --is-ancestor origin/${{ github.event.inputs.merge_branch }} HEAD); then
-            echo "Nothing to merge from '${{ github.event.inputs.merge_branch }}' into '${{ github.event.inputs.release_branch }}'."
-            exit 0
-          fi
-          git merge origin/${{ github.event.inputs.merge_branch }} --no-ff -m "Merge branch '${{ github.event.inputs.merge_branch }}' into '${{ github.event.inputs.release_branch }}'"
+          git merge origin/${{ github.event.inputs.merge_branch }} --no-ff --commit -m "Merge branch '${{ github.event.inputs.merge_branch }}' into '${{ github.event.inputs.release_branch }}'"
       
       - name: Install Dependencies
         run: |
