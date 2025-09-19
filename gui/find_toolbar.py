@@ -99,11 +99,15 @@ class FindToolbar(QToolBar):
             self.search_all_cache = (self.find_widget.text(), in_collapsed_data, idx_list)
         # Show results in the footer table
         render_logs_table = FooterNotebook().get_widget(FOOTER_PAGE.FIND_RESULTS)
-        if not render_logs_table:
+        if isinstance(render_logs_table, RenderedLogsTable):
+            render_logs_table.refresh(
+                specific_rows=self.search_all_cache[2],
+                show_collapsed=self.search_all_cache[1]
+            )
+        else:
             render_logs_table = RenderedLogsTable()
             FooterNotebook().set_widget(FOOTER_PAGE.FIND_RESULTS, render_logs_table)
-        render_logs_table.refresh(
-            specific_rows=self.search_all_cache[2],
-            show_collapsed=self.search_all_cache[1]
-        )
-        FooterNotebook().set_in_focus(FOOTER_PAGE.FIND_RESULTS)
+            render_logs_table.refresh(
+                specific_rows=self.search_all_cache[2],
+                show_collapsed=self.search_all_cache[1]
+            )

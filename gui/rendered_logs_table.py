@@ -11,6 +11,8 @@ from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 from logs_managing.metadata_utils import get_style_from_metadata
 from processor.processor_manager import ProcessorManager
 
+from gui.meatadata_content import MetadataContent
+
 class LogsTableModel(QAbstractTableModel):
     ''' Table model for displaying logs with metadata support. 
         Should be used in conjunction with RenderedLogsTable(or any QTableView.setModel).\n
@@ -110,12 +112,11 @@ class LogsTableModel(QAbstractTableModel):
 class RenderedLogsTable(QTableView):
     def __init__(self):
         super().__init__()
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSortingEnabled(False)
         self.setModel(LogsTableModel(DataFrame(), DataFrame()))
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.horizontalHeader().setStretchLastSection(True)
 
         self.model = LogsTableModel()

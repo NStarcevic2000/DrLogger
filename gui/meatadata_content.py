@@ -89,17 +89,16 @@ class MetadataWidget(QWidget):
 class MetadataContent():
     ''' Manages the generation and display of metadata for log entries. '''
     # Define column names to keep parity between metadata Dataframe and generated QWidgets
-    __IS_RUNNING = "IS RUNNING"
+    __WIDGET = "WIDGET"
     __METADATA = "METADATA"
 
     def __init__(self):
-        self._current_data = DataFrame()
+        self.metadata = DataFrame()
         self.prepare_for_generating()
 
     def prepare_for_generating(self):
-        _, self._current_data = LogsManager().get_data(show_collapsed=True)
-        self._current_data.insert(0, self.__IS_RUNNING, False)
-        self._current_data.insert(1, self.__METADATA, None)
+        self.metadata = DataFrame(LogsManager().get_metadata(), columns=[self.__METADATA])
+        self.metadata.insert(0, self.__WIDGET, None)
 
     def show_in_footer(self, index:int):
         self.generate_for_line(index, show_in_footer=True)
@@ -108,42 +107,18 @@ class MetadataContent():
         ''' Force generate metadata for a specific line index. 
             In case of running in a background, it will request this one to be done immediatly.
         '''
-        if self._current_data.at[index, self.__METADATA] is not None:
+        index = self.metadata.index[index]
+        if self.metadata.at[index, self.__WIDGET] is not None:
             if show_in_footer:
-                FooterNotebook().set_widget(FOOTER_PAGE.METADATA, self._current_data.at[index, self.__METADATA])
-        if not self._current_data.at[index, self.__IS_RUNNING]:
-            # Mark as running
-            self._current_data.at[index, self.__IS_RUNNING] = True
-            # try:
-            gen_dict = {}
-            print("Have metadata:", self._current_data.head(5))
-            for col in self._current_data.columns[2:]: # Skip IS_RUNNING and METADATA columns
-                if isinstance(self._current_data.at[index, col], dict):
-                    # Deep merge dictionaries to handle nested structures
-                    def deep_update(d, u):
-                        for k, v in u.items():
-                            if isinstance(v, dict) and isinstance(d.get(k), dict):
-                                deep_update(d[k], v)
-                            else:
-                                d[k] = v
-                    deep_update(gen_dict, self._current_data.at[index, col])
-                    print("After merge:", gen_dict)
-                else:
-                    print(f"Skipping non-dict metadata for column {col}: {self._current_data.at[index, col]}")
-            generate_widget = MetadataWidget(gen_dict)
-            self._current_data.at[index, self.__METADATA] = generate_widget
+                FooterNotebook().set_widget(FOOTER_PAGE.METADATA, self.metadata.at[index, self.__WIDGET])
+        else:
+            widget = MetadataWidget(self.metadata.at[index, self.__METADATA])
+            self.metadata.at[index, self.__WIDGET] = widget
             if show_in_footer:
-                FooterNotebook().set_widget(FOOTER_PAGE.METADATA, generate_widget)
-            # except Exception as e:
-            #     print(f"Error generating metadata for line {index}: {e}")
-            #finally:
-                # Mark as not running
-            self._current_data.at[index, self.__IS_RUNNING] = False
-            
-
+                FooterNotebook().set_widget(FOOTER_PAGE.METADATA, widget)
     
     def generate_for_all(self):
         ''' Generate Metadata for all lines. '''
         self.prepare_for_generating()
-        for i in range(len(self._current_data)):
+        for i in range(len(self.metadata)):
             self.generate_for_line(i)
