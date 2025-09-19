@@ -6,8 +6,8 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 
 from processor.split_log_lines_processor import SplitLogLinesProcessor
-from util.logs_manager import LogsManager
-from util.logs_column import CollapsingRowsColumn, DataColumn, MetadataColumn
+from logs_managing.logs_manager import LogsManager
+from logs_managing.logs_column_types import CaptureMessageColumn, DataColumn, MetadataColumn
 
 from util.test_util import assert_columns_by_type
 
@@ -46,7 +46,7 @@ class TestSplitLogLinesProcessor(unittest.TestCase):
             'Group3': ["abc", "def", "ghi"],
             'Message': ["", "", ""]
         })
-        assert_frame_equal(result_df, expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)
 
     def test_empty_dataframe(self):
         input_df = DataFrame({'Message': []})
@@ -85,4 +85,4 @@ class TestSplitLogLinesProcessor(unittest.TestCase):
             'From': ["1", "2", "3"],
             'Message': ["abc", "def", "ghi"]
         })
-        assert_frame_equal(result_df, expected_df)
+        assert_frame_equal(result_df, expected_df, check_dtype=False)

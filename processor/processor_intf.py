@@ -1,7 +1,7 @@
 from pandas import DataFrame
 from typing import List
 
-from util.logs_column import COLUMN_TYPE
+from logs_managing.logs_column_types import COLUMN_TYPE
 from util.config_store import ConfigStore, Config
 
 class IProcessor():

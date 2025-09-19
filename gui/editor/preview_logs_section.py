@@ -6,7 +6,7 @@ from pandas import DataFrame
 
 from util.config_store import ConfigManager as CfgMan
 from processor.processor_manager import ProcessorManager
-from util.logs_manager import LogsManager
+from logs_managing.logs_manager import LogsManager
 
 from gui.rendered_logs_table import RenderedLogsTable
 
@@ -75,7 +75,6 @@ class PreviewLogsSection(QVBoxLayout):
     def preview_logs_cmd(self):
         def cmd():
             self.preview_logs_table.refresh(
-                CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5),
-                show_collapsed=True
+                CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5)
             )
         self.parent.status_bar.call(cmd)

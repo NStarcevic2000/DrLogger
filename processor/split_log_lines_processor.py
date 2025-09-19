@@ -5,8 +5,8 @@ from pandas import DataFrame
 import re
 
 from processor.processor_intf import IProcessor
-from util.logs_column import COLUMN_TYPE, DataColumn
-from util.logs_column import PREDEFINED_COLUMN_NAMES
+from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn
+from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.presets_manager import PresetsManager
 
@@ -23,9 +23,9 @@ class SplitLogLinesProcessor(IProcessor):
                 timestamp_format_arg:str|None=None) -> list[COLUMN_TYPE]|None:
         if not isinstance(data, DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
-        if PREDEFINED_COLUMN_NAMES.MESSAGE.value not in data.columns and not data.empty:
-            raise ValueError(f"DataFrame must contain a {PREDEFINED_COLUMN_NAMES.MESSAGE.value} column (non-empty)")
-        
+        if RColNameNS.Message not in data.columns and not data.empty:
+            raise ValueError(f"DataFrame must contain a {RColNameNS.Message} column (non-empty)")
+
         # Input:
         # Sample 1 abc:Message 1 cba
         # Sample 2 def:Message 2 fed
@@ -49,7 +49,7 @@ class SplitLogLinesProcessor(IProcessor):
         
         # Apply regex to each Line in the DataFrame
         try:
-            extracted = data[PREDEFINED_COLUMN_NAMES.MESSAGE.value].str.extract(regex_pattern, expand=True)
+            extracted = data[RColNameNS.Message].str.extract(regex_pattern, expand=True)
             for group in re.findall(r'<(.+?)>', pattern):
                 if group in extracted.columns:
                     data[group] = extracted[group]
@@ -79,20 +79,20 @@ class SplitLogLinesProcessor(IProcessor):
                 data.insert(len(timestamp_tags)+1, 'Timestamp', timestamp_col)
                 data.drop(columns=timestamp_tags, inplace=True, errors='ignore')
 
-        # Remove matched part (including separators) from PREDEFINED_COLUMN_NAMES.MESSAGE.value to get only the remaining message
+        # Remove matched part (including separators) from RColNameNS.Message to get only the remaining message
         last_group_match = list(re.finditer(r'<(.+?)>', pattern))
         if last_group_match:
             remove_regex = (
             re.sub(r'<(.+?)>', r'\\w+', pattern)
             .replace(' ', r'\s+')
             )
-            data[PREDEFINED_COLUMN_NAMES.MESSAGE.value] = data[PREDEFINED_COLUMN_NAMES.MESSAGE.value].str.replace(f'^{remove_regex}', '', regex=True).str.lstrip()
+            data[RColNameNS.Message] = data[RColNameNS.Message].str.replace(f'^{remove_regex}', '', regex=True).str.lstrip()
         else:
-            data[PREDEFINED_COLUMN_NAMES.MESSAGE.value] = data[PREDEFINED_COLUMN_NAMES.MESSAGE.value]
+            data[RColNameNS.Message] = data[RColNameNS.Message]
         # Return new columns first, then the remaining message column
         results = []
         for col in data.columns:
-            if col != PREDEFINED_COLUMN_NAMES.MESSAGE.value:
+            if col != RColNameNS.Message:
                 results.append(DataColumn(data[col]))
-        results.append(DataColumn(data[PREDEFINED_COLUMN_NAMES.MESSAGE.value]))
+        results.append(DataColumn(data[RColNameNS.Message]))
         return results

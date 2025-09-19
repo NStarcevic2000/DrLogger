@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication
 
 from processor.processor_manager import ProcessorManager
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
-from util.logs_manager import LogsManager
+from logs_managing.logs_manager import LogsManager
 from util.presets_manager import PresetsManager
 from util.config_enums import (
     KEEP_SOURCE_FILE_LOCATION_ENUM,
@@ -13,6 +13,7 @@ from util.config_enums import (
 )
 
 from gui.main_window import DrLoggerMainWindow
+import pstats
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     # profiler.enable()
     # viewer.update()
     # profiler.disable()
-    # profiler.print_stats(sort='cumtime')
-    # print(LogsManager().get_rendered_data())
+    # stats = pstats.Stats(profiler).sort_stats('cumtime').print_callees('__capture')
+            
 
     sys.exit(app.exec_())

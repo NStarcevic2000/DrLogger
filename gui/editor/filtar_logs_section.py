@@ -47,13 +47,6 @@ class FilterLogsSection(QVBoxLayout):
 
         vbox = QVBoxLayout()
         vbox.setAlignment(Qt.AlignTop)
-        self.keep_hidden_logs = BoolConfigEntry(
-            self,
-            
-            "Keep Hidden Logs:",
-            CfgMan().r.filter_logs.keep_hidden_logs
-        )
-        vbox.addLayout(self.keep_hidden_logs.container)
         self.contextualize_lines_count = StringConfigEntry(
             self,
             
@@ -79,7 +72,6 @@ class FilterLogsSection(QVBoxLayout):
 
     def update_content(self):
         self.filter_pattern_editor.update_content()
-        self.keep_hidden_logs.update_content()
         self.contextualize_lines_count.update_content()
         self.contextualize_lines_type.update_content()
         self.preset_selector.update_content()
