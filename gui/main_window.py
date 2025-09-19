@@ -1,15 +1,8 @@
 from PyQt5.QtWidgets import (
-    QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTableWidget, QTableWidgetItem,
-    QPushButton, QWidget, QMainWindow, QToolBar, QAction, QMessageBox, QShortcut
+    QMainWindow, QToolBar, QAction, QShortcut
 )
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QKeySequence, QColor
-
-from pandas import DataFrame
-
-from util.config_store import ConfigManager as CfgMan
-from processor.processor_manager import ProcessorManager
-from logs_managing.logs_manager import LogsManager
+from PyQt5.QtGui import QFont, QKeySequence
 
 from gui.editor.editor_prompt import EditorPrompt
 from gui.common.status_bar import StatusBar
@@ -18,9 +11,7 @@ from gui.rendered_logs_table import RenderedLogsTable
 
 from gui.find_toolbar import FindToolbar
 from gui.footer_notebook import FooterNotebook, FOOTER_PAGE
-from PyQt5.QtWidgets import QTabWidget
-
-from PyQt5.QtCore import QTimer
+from gui.meatadata_content import MetadataContent
 
 class DrLoggerMainWindow(QMainWindow):
     def __init__(self):
@@ -112,6 +103,4 @@ class DrLoggerMainWindow(QMainWindow):
             del shortcut
     
     def handle_row_double_click(self, index):
-        from gui.footer_notebook import FooterNotebook
-        from gui.meatadata_content import MetadataContent
         MetadataContent().show_in_footer(index.row())
