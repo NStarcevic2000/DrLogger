@@ -48,10 +48,12 @@ class OpenLogsProcessor(IProcessor):
                 common_path_prefix = os.path.commonpath(file_paths)
         rows = []
         for file_path in file_paths:
-            with open(file_path, 'r', errors='ignore', encoding='utf-8') as file:
+            with open(file_path, 'r', encoding='utf-8', errors='replace', newline='') as file:
                 for line in file:
-                    # Strip any line ending whitespace/newline characters
-                    line = line.rstrip()
+                    # Strip any line ending whitespace/newline characters and remove null bytes
+                    line = line.replace('\x00', '').rstrip()
+                    if not line:
+                        continue  # Skip empty lines
                     if keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH:
                         visible_file_value = file_path
                     elif keepSourceFileLocation == KEEP_SOURCE_FILE_LOCATION_ENUM.FILE_ONLY:
@@ -66,7 +68,9 @@ class OpenLogsProcessor(IProcessor):
                         RColNameNS.Message: line,
                         'Original Messages': line
                     })
-        data = DataFrame(rows).reset_index(drop=True)
+        print(f"Opened {len(rows)} log lines from {len(file_paths)} files.")
+        print(rows[:5])
+        data = DataFrame(rows, dtype=str).reset_index(drop=True)
         # Optionally, return the 'File' column if requested
         result = []
         if keepSourceFileLocation != KEEP_SOURCE_FILE_LOCATION_ENUM.NONE:
