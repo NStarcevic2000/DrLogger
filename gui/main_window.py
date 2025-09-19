@@ -9,7 +9,7 @@ from pandas import DataFrame
 
 from util.config_store import ConfigManager as CfgMan
 from processor.processor_manager import ProcessorManager
-from util.logs_manager import LogsManager
+from logs_managing.logs_manager import LogsManager
 
 from gui.editor.editor_prompt import EditorPrompt
 from gui.common.status_bar import StatusBar
@@ -96,7 +96,7 @@ class DrLoggerMainWindow(QMainWindow):
     
     def update(self):
         def cmd():
-            self.main_table.refresh(show_collapsed=True)
+            self.main_table.refresh()
         self.status_bar.call(cmd)
 
     def set_QShortcut_action(self, button: str, action: callable):
