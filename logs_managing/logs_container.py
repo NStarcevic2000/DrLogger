@@ -9,14 +9,12 @@ from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 class LogsContainer():
     ''' Container for both data and all its related properties and details. '''
     def __init__(self):
-        self.data = DataFrame()
-        self.metadata = Series([], name="METADATA")
-        self.captured_rows = Series([], name="COLLAPSABLE")
+        self.clear()
     
     def clear(self):
         self.data = DataFrame()
         self.metadata = Series([], name="METADATA")
-        self.captured_rows = Series([], name="COLLAPSABLE")
+        self.visible_rows = []
         return self
 
     def set_data_column(self, column:Series, name:str):
@@ -31,10 +29,11 @@ class LogsContainer():
         else:
             self.data = self.data.drop(columns=[name], errors='ignore')
             self.data[name] = column.copy()
+        # Initialize other elements
         if self.metadata.empty:
             self.metadata = Series([{}]*len(self.data), name="METADATA")
-        if self.captured_rows.empty:
-            self.captured_rows = Series([None] * len(self.data), index=self.data.index, name="COLLAPSABLE", dtype="object")
+        # if self.visible_rows.empty:
+        #     self.visible_rows = self.data.index.tolist()
         return self
     
     def get_data(self, row:int|list[int]=None) -> DataFrame:
@@ -152,13 +151,9 @@ class LogsContainer():
         if captured_header[0] == -1 and captured_header[1] is not None:
             captured_header = (first_row, captured_header[1])
         # Format captured header
-        header_str = str(captured_header[1]) if captured_header[1] is not None else "<Undefined>"
-        header_str = header_str.replace("{count}", str(len(captured_data))).strip()
+        header_str = (str(captured_header[1]) if captured_header[1] is not None else "<Undefined>")\
+            .replace("{count}", str(len(captured_data))).strip()
         captured_header = (captured_header[0], header_str)
-        # Drop all captured rows from data and metadata except the header
-        drop_indices = [idx for idx in captured_data.index if idx != captured_header[0]]
-        self.data = self.data.loc[~self.data.index.isin(drop_indices)]
-        self.metadata = self.metadata.loc[~self.metadata.index.isin(drop_indices)]
         # Merge generated metadata with existing metadata
         # TODO: Figure out a different way to merge metadata, this is too strict
         self.metadata.at[captured_header[0]] = merge_dicts(self.metadata.at[captured_header[0]],
@@ -173,11 +168,8 @@ class LogsContainer():
                 RMetaNS.CaptureRows.CollapsedInTotal: len(captured_data)
             }
         })
-        # Add new row to data with captured header
+        # Insert new row to data with captured header
         self.data.at[captured_header[0], RColNameNS.Message] = captured_header[1]
-        # Sort by index to maintain order
-        self.data.sort_index(inplace=True)
-        self.metadata.sort_index(inplace=True)
         # print(f"After capture, data is:\n{self.data}\nWith metadata:\n{self.metadata}\n")
 
     def set_collapsable(self, collapsable:Series, replace:str=None):

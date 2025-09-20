@@ -59,5 +59,6 @@ class ProcessorManager:
             for col in LogsManager().get_columns():
                 print(f"{col.__class__.__name__}({col.name})")
             print(f"Processor {processor.__class__.__name__} finished in {end_time - start_time:.4f} seconds.")
+        LogsManager().finalize()
         print("Processing complete.")
         print(LogsManager().get_data())

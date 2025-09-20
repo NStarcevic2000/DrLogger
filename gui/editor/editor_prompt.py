@@ -56,9 +56,7 @@ class EditorPrompt(QDialog):
         self.status_bar = StatusBar()
         self.status_bar.set_enabled(True)
 
-        self.save_button.clicked.connect(
-            lambda: self.status_bar.call_in_background(ProcessorManager().run, on_done=self.on_done_cmd)
-        )
+        self.save_button.clicked.connect(self.run_cmd)
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.status_bar)
@@ -70,8 +68,8 @@ class EditorPrompt(QDialog):
         self.update()
         self.show()
 
-    def on_done_cmd(self):
-        self.close()
+    def run_cmd(self):
+        self.hide()
         if self.on_run_cmd:
             self.on_run_cmd()
 

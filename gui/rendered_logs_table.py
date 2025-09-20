@@ -128,7 +128,6 @@ class RenderedLogsTable(QTableView):
 
     def refresh(self,
             specific_rows: int | list[int] | None = None):
-        ProcessorManager().run()
         self.setUpdatesEnabled(False)
         self.setModel(
             LogsTableModel(

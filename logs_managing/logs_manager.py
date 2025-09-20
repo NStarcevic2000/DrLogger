@@ -10,7 +10,6 @@ class LogsManager():
     '''
     def __init__(self):
         self.columns:List[COLUMN_TYPE] = []
-
         self.logs_container = LogsContainer()
 
     def erase_data(self):
@@ -23,7 +22,10 @@ class LogsManager():
             self.columns.append(col)
             print(f"Added column '{col.name}' of type {col.__class__.__name__}")
         self.__apply_process(new_columns)
-        self.__apply_post_process(new_columns)
+    
+    def finalize(self):
+        ''' Finalize the logs data after all processing is done.'''
+        self.__apply_post_process(self.columns)
 
     def __apply_process(self,
                         columns: list[COLUMN_TYPE],
