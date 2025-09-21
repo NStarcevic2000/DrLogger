@@ -27,7 +27,7 @@ class DrLoggerMainWindow(QMainWindow):
         self.editor_prompt = EditorPrompt(self.update)
         self.editor_prompt.setWindowModality(Qt.ApplicationModal)
         self.editor_prompt.setWindowFlag(Qt.WindowStaysOnTopHint, False)
-        self.editor_prompt.show_updated()
+        # self.editor_prompt.show_updated()
 
         self.presets_prompt = PresetPrompt()
         self.presets_prompt.setWindowModality(Qt.ApplicationModal)

@@ -39,7 +39,7 @@ class ProcessorManager:
                 # Perform processing over "non-collapsed" visible data
                 # (metadata columns are not visible to processors)
                 # Only the first processor gets the list of log files as input
-                input_data = LogsManager().get_data() if processor != self.processors[0] else CfgMan().get(CfgMan().r.open_logs.log_files)
+                input_data = LogsManager().get_data(show_collapsed=False) if processor != self.processors[0] else CfgMan().get(CfgMan().r.open_logs.log_files)
                 print(f"Input data type: {type(input_data)}")
                 print(input_data)
                 returned_columns = processor.process(input_data)

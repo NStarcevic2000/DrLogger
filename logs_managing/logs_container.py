@@ -14,7 +14,7 @@ class LogsContainer():
     def clear(self):
         self.data = DataFrame()
         self.metadata = Series([], name="METADATA")
-        self.visible_rows = []
+        self.visible_rows = Series([], dtype=bool).tolist()
         return self
 
     def set_data_column(self, column:Series, name:str):
@@ -32,17 +32,20 @@ class LogsContainer():
         # Initialize other elements
         if self.metadata.empty:
             self.metadata = Series([{}]*len(self.data), name="METADATA")
-        # if self.visible_rows.empty:
-        #     self.visible_rows = self.data.index.tolist()
+        if self.visible_rows == []:
+            self.visible_rows = Series([True]*len(self.data), dtype=bool).tolist()
         return self
-    
-    def get_data(self, row:int|list[int]=None) -> DataFrame:
+
+    def get_data(self, row:int|list[int]=None, show_collapsed:bool=True) -> DataFrame:
         if row is None:
-            return self.data.copy()
+            return self.data[self.visible_rows].copy() if show_collapsed else \
+                self.data.copy()
         elif isinstance(row, int):
-            return self.data.copy().head(row)
+            return self.data[self.visible_rows].copy().head(row) if show_collapsed else \
+                self.data.copy().head(row)
         elif isinstance(row, list):
-            return self.data.loc[row].copy()
+            return self.data[self.visible_rows].loc[row].copy() if show_collapsed else \
+                self.data.loc[row].copy()
         else:
             raise ValueError("Invalid row index type.")
         
@@ -69,15 +72,20 @@ class LogsContainer():
             self.metadata = metadata.copy()
         else:
             self.metadata = self.metadata.copy().combine(metadata.copy(), merge_dicts)
+        if self.visible_rows == []:
+            self.visible_rows = Series([True]*len(self.data), dtype=bool).tolist()
         return self
-    
-    def get_metadata(self, row:int|list[int]=None) -> Series:
+
+    def get_metadata(self, row:int|list[int]=None, show_collapsed:bool=True) -> Series:
         if row is None:
-            return self.metadata.copy()
+            return self.metadata[self.visible_rows].copy() if show_collapsed else \
+                self.metadata.copy()
         elif isinstance(row, int):
-            return self.metadata.copy().head(row)
+            return self.metadata[self.visible_rows].copy().head(row) if show_collapsed else \
+                self.metadata.copy().head(row)
         elif isinstance(row, list):
-            return self.metadata.loc[row].copy()
+            return self.metadata[self.visible_rows].loc[row].copy() if show_collapsed else \
+                self.metadata.loc[row].copy()
         else:
             raise ValueError("Invalid row index type.")
 
@@ -110,7 +118,7 @@ class LogsContainer():
             self.metadata = self.metadata.combine(overlayed_style_column, merge_dicts)
         return self
 
-    def get_style(self, row:int|list[int]=None) -> Series:
+    def get_style(self, row:int|list[int]=None, show_collapsed:bool=True) -> Series:
         style_column = Series([{
             RMetaNS.General.name: {
                 RMetaNS.General.ForegroundColor: "#000000",
@@ -119,11 +127,14 @@ class LogsContainer():
             }]*len(self.metadata), index=self.metadata.index, name="Style")
         style_column = style_column.copy().combine(self.metadata.copy(), overlay_dict)
         if row is None:
-            return style_column
+            return style_column[self.visible_rows] if show_collapsed else \
+                style_column
         elif isinstance(row, int):
-            return style_column.copy().head(row)
+            return style_column.head(row) if show_collapsed else \
+                style_column.head(row)
         elif isinstance(row, list):
-            return style_column.loc[row].copy()
+            return style_column.loc[row] if show_collapsed else \
+                style_column.loc[row]
         else:
             raise ValueError("Invalid row index type.")
     
@@ -133,7 +144,8 @@ class LogsContainer():
 
 
     def __capture(self,
-                  captured_header:tuple[int, str],
+                  captured_header_idx:int,
+                  captured_header_repl:str,
                   captured_data:DataFrame,
                   ):
         # print(f"Captured:\n{captured_data}\nWith metadata:\n{captured_metadata}")
@@ -147,46 +159,43 @@ class LogsContainer():
             return
         captured_data = captured_data.loc[valid_indices]
         first_row, last_row = captured_data.index[0], captured_data.index[-1]
-        # In case of uniform capturing, we do not have a specific "message" for each capture
-        if captured_header[0] == -1 and captured_header[1] is not None:
-            captured_header = (first_row, captured_header[1])
         # Format captured header
-        header_str = (str(captured_header[1]) if captured_header[1] is not None else "<Undefined>")\
-            .replace("{count}", str(len(captured_data))).strip()
-        captured_header = (captured_header[0], header_str)
+        captured_header_repl = captured_header_repl.replace("{count}", str(len(captured_data)))
         # Merge generated metadata with existing metadata
         # TODO: Figure out a different way to merge metadata, this is too strict
-        self.metadata.at[captured_header[0]] = merge_dicts(self.metadata.at[captured_header[0]],
+        self.metadata.at[captured_header_idx] = merge_dicts(self.metadata.at[captured_header_idx],
         {
             RMetaNS.General.name: {
                 RMetaNS.General.ForegroundColor: "#878787",
                 RMetaNS.General.BackgroundColor: "#FFFFFF",
             },
             RMetaNS.CaptureRows.name: {
-                RMetaNS.CaptureRows.CaptureRows: captured_header[1],
+                RMetaNS.CaptureRows.CaptureRows: captured_header_repl,
                 RMetaNS.CaptureRows.FromToIndexes: (first_row, last_row),
                 RMetaNS.CaptureRows.CollapsedInTotal: len(captured_data)
             }
         })
-        # Insert new row to data with captured header
-        self.data.at[captured_header[0], RColNameNS.Message] = captured_header[1]
-        # print(f"After capture, data is:\n{self.data}\nWith metadata:\n{self.metadata}\n")
+        # Set header row
+        self.data.at[captured_header_idx, RColNameNS.Message] = captured_header_repl
+        # Hide captured rows
+        for idx in captured_data.index:
+            self.visible_rows[idx] = False
+        # Unhide header row
+        self.visible_rows[captured_header_idx] = True
+        # print(f"After capture, data is:\n{self.data}\nWith metadata:\n{self.metadata} and visible_rows:\n{self.visible_rows}\n")
 
     def set_collapsable(self, collapsable:Series, replace:str=None):
         ''' Set or update the collapsable Series.'''
         class CapturedData:
             def __init__(self):
-                self.header_idx = -1
-                self.header_fmt = None
-                self.begin_idx = -1
-                self.end_idx = -1
+                self.reset()
 
             def reset(self):
-                self.header_idx = -1
+                self.header_idx = None
                 self.header_fmt = None
-                self.begin_idx = -1
-                self.end_idx = -1
-        
+                self.begin_idx = None
+                self.end_idx = None
+
         captured_data = CapturedData()
         if len(self.data[RColNameNS.Message]) != len(collapsable):
             raise ValueError("collapsable Series must have the same length as the data Message column.")
@@ -196,9 +205,10 @@ class LogsContainer():
             # No changes, see if we captured anything
             if orig_message == new_message:
                 # We did capture something, save it
-                if captured_data.begin_idx != -1 and captured_data.end_idx != -1:
+                if captured_data.begin_idx is not None and captured_data.end_idx is not None:
                     self.__capture(
-                        (captured_data.header_idx, captured_data.header_fmt if captured_data.header_fmt is not None else replace),
+                        captured_data.begin_idx if captured_data.header_idx is None else captured_data.header_idx,
+                        replace if captured_data.header_fmt is None else captured_data.header_fmt,
                         self.data.loc[captured_data.begin_idx:captured_data.end_idx].copy(),
                     )
                     # Reset captured data and metadata
@@ -209,17 +219,18 @@ class LogsContainer():
                 # Save new message as a header for Message column
                 captured_data.header_idx, captured_data.header_fmt = row_idx, new_message
                 # Capture data and metadata
-                captured_data.begin_idx, captured_data.end_idx = row_idx if captured_data.begin_idx == -1 else captured_data.begin_idx, row_idx
-
+                captured_data.begin_idx, captured_data.end_idx = row_idx if captured_data.begin_idx is None else captured_data.begin_idx, row_idx
+            
             # None is the continuation of a capture
             # If replace is defined, it can also be the start of a capture group
-            elif new_message == None:
+            elif new_message is None:
                 # Capture data and metadata
-                captured_data.begin_idx, captured_data.end_idx = row_idx if captured_data.begin_idx == -1 else captured_data.begin_idx, row_idx
+                captured_data.begin_idx, captured_data.end_idx = row_idx if captured_data.begin_idx is None else captured_data.begin_idx, row_idx
         # Capture very end if any is left
-        if captured_data.begin_idx != -1 and captured_data.end_idx != -1:
+        if captured_data.begin_idx is not None and captured_data.end_idx is not None:
             self.__capture(
-                (captured_data.header_idx, captured_data.header_fmt if captured_data.header_fmt is not None else replace),
+                captured_data.begin_idx if captured_data.header_idx is None else captured_data.header_idx,
+                replace if captured_data.header_fmt is None else captured_data.header_fmt,
                 self.data.loc[captured_data.begin_idx:captured_data.end_idx].copy(),
             )
         return self

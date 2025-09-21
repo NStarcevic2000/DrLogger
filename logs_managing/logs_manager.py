@@ -16,12 +16,14 @@ class LogsManager():
         self.columns = []
         self.logs_container.clear()
 
-    def add_new_columns(self, new_columns:List[COLUMN_TYPE]):
+    def add_new_columns(self, new_columns:List[COLUMN_TYPE], apply_post_process:bool=False):
         ''' Update the current columns with new columns from a processing stage.'''
         for col in new_columns:
             self.columns.append(col)
             print(f"Added column '{col.name}' of type {col.__class__.__name__}")
         self.__apply_process(new_columns)
+        if apply_post_process:
+            self.__apply_post_process(new_columns)
     
     def finalize(self):
         ''' Finalize the logs data after all processing is done.'''
@@ -61,23 +63,16 @@ class LogsManager():
         return self.columns.copy()
 
     def get_data(self,
-                 rows: int | list[int] = None):
-        return self.logs_container.get_data(rows)
-    
+                 rows: int | list[int] = None, show_collapsed:bool=True):
+        return self.logs_container.get_data(rows, show_collapsed=show_collapsed)
+
     def get_metadata(self,
-                     rows: int | list[int] = None):
-        return self.logs_container.get_metadata(rows)
+                     rows: int | list[int] = None, show_collapsed:bool=True):
+        return self.logs_container.get_metadata(rows, show_collapsed=show_collapsed)
 
     def get_style(self,
-                   rows: int | list[int] = None):
-        return self.logs_container.get_style(rows)
-
-    def get_all_packaged(self,
-                 rows: int | list[int] = None):
-        return (
-            self.logs_container.get_data(rows),
-            self.logs_container.get_metadata(rows)
-        )
+                   rows: int | list[int] = None, show_collapsed:bool=True):
+        return self.logs_container.get_style(rows, show_collapsed=show_collapsed)
 
     # For testing purposes, we might use it somewhere else also
     def simulate_rendered_data(self,
@@ -94,4 +89,4 @@ class LogsManager():
         self.__apply_process(cols, logs_container=logs_container)
         # Apply post-processing
         self.__apply_post_process(cols, logs_container=logs_container)
-        return logs_container.get_data(rows)
+        return logs_container.get_data(rows, show_collapsed=True)
