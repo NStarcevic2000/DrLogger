@@ -27,8 +27,9 @@ class LogsContainer():
         elif len(column) != len(self.data):
             raise ValueError("New data must have the same number of rows as existing data.")
         else:
-            self.data = self.data.drop(columns=[name], errors='ignore')
             self.data[name] = column.copy()
+            self.data = self.data[[col for col in self.data.columns if col != name] + [name]]
+            
         # Initialize other elements
         if self.metadata.empty:
             self.metadata = Series([{}]*len(self.data), name="METADATA")
@@ -137,7 +138,6 @@ class LogsContainer():
                 style_column.loc[row]
         else:
             raise ValueError("Invalid row index type.")
-    
 
 
 

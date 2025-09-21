@@ -31,6 +31,7 @@ if __name__ == "__main__":
 
     viewer = DrLoggerMainWindow()
     viewer.show()
+    viewer.editor_prompt.show()
     # Benchmark performance of initial rendering
     # profiler = cProfile.Profile()
     # profiler.enable()
