@@ -44,8 +44,6 @@ class OpenFilesSection(QVBoxLayout):
         if files:
             CfgMan().set(CfgMan().r.open_logs.log_files, files)
         self.set_label()
-        ProcessorManager().run()
-        self.call_update_cb()
     
     def set_label(self):
         files = CfgMan().get(CfgMan().r.open_logs.log_files, [])
@@ -59,4 +57,5 @@ class OpenFilesSection(QVBoxLayout):
             self.label.setText("Open Logs: No files opened")
     
     def update_content(self):
+        self.set_label()
         self.keep_source_files_column_selector.update_content()

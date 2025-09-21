@@ -127,13 +127,13 @@ class RenderedLogsTable(QTableView):
         self.cached_metadata:DataFrame = DataFrame()
 
     def refresh(self,
-            specific_rows: int | list[int] | None = None):
-        ProcessorManager().run()
+            specific_rows: int | list[int] | None = None,
+            show_collapsed: bool = True):
         self.setUpdatesEnabled(False)
         self.setModel(
             LogsTableModel(
-                LogsManager().get_data(rows=specific_rows),
-                LogsManager().get_style(rows=specific_rows)
+                LogsManager().get_data(rows=specific_rows, show_collapsed=show_collapsed),
+                LogsManager().get_style(rows=specific_rows, show_collapsed=show_collapsed)
             )
         )
         self.resizeColumnsToContents()

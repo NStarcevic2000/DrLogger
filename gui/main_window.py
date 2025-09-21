@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
 
+from processor.processor_manager import ProcessorManager
+
 from gui.editor.editor_prompt import EditorPrompt
 from gui.common.status_bar import StatusBar
 from gui.preset_prompt import PresetPrompt
@@ -25,7 +27,7 @@ class DrLoggerMainWindow(QMainWindow):
         self.editor_prompt = EditorPrompt(self.update)
         self.editor_prompt.setWindowModality(Qt.ApplicationModal)
         self.editor_prompt.setWindowFlag(Qt.WindowStaysOnTopHint, False)
-        self.editor_prompt.show_updated()
+        # self.editor_prompt.show_updated()
 
         self.presets_prompt = PresetPrompt()
         self.presets_prompt.setWindowModality(Qt.ApplicationModal)
@@ -86,9 +88,7 @@ class DrLoggerMainWindow(QMainWindow):
         self.main_table.verticalHeader().setDefaultSectionSize(self.font_size * 2)
     
     def update(self):
-        def cmd():
-            self.main_table.refresh()
-        self.status_bar.call(cmd)
+        self.status_bar.call_in_background(ProcessorManager().run, on_done=self.main_table.refresh)
 
     def set_QShortcut_action(self, button: str, action: callable):
         shortcut = QShortcut(QKeySequence(button), self)

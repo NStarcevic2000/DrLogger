@@ -141,6 +141,7 @@ class TestLogsManager(unittest.TestCase):
             'Category': ['Success', 'Failed', 'Success'],
             'Message': ['<Collapsed>', 'Random Message2', '<Collapsed>']
         })
+        print(result_df)
         assert_frame_equal(result_df, expected_df, check_dtype=False)
 
 
@@ -157,6 +158,7 @@ class TestLogsManager(unittest.TestCase):
             'Numbers': ['3', '4', '5', '6'],
             'Message': ['<Special Override Message>', 'Message4', 'Message5', '<Collapsed>']
         })
+        print(result_df)
         assert_frame_equal(result_df.reset_index(drop=True), expected_df, check_dtype=False)
     
 
@@ -204,7 +206,7 @@ class TestLogsManager(unittest.TestCase):
         # Collapse rows
         LogsManager().add_new_columns([
             CaptureMessageColumn([None, 'LINE2', None], name="Collapsing Rows", replace="<Collapsed>"),
-        ])
+        ], apply_post_process=True)
         visible_df = LogsManager().get_data()
         assert_frame_equal(visible_df, DataFrame({
             'Category': ['A', 'B', 'C'],
