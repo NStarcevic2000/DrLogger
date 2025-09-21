@@ -39,7 +39,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.release_branch }}
           fetch-depth: 0
-        
+      
       - name: Merge from another branch (locally)
         run: |
           git config --global user.name "github-actions[bot]"
@@ -47,7 +47,7 @@ jobs:
           git fetch origin ${{ github.event.inputs.merge_branch }}
           git checkout ${{ github.event.inputs.release_branch }}
           git merge origin/${{ github.event.inputs.merge_branch }} --no-ff --commit -m "Merge branch '${{ github.event.inputs.merge_branch }}' into '${{ github.event.inputs.release_branch }}'"
-      
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -76,12 +76,12 @@ jobs:
             next_patch=$((patch + 1))
           fi
           new_tag="${prefix}.${next_patch}"
-          echo "NEW_TAG=tag/$new_tag" >> $GITHUB_ENV
-      
+          echo "NEW_TAG=$new_tag" >> $GITHUB_ENV
+
       - name: Tag Build
         run: |
           git tag "${{ env.NEW_TAG }}"
-
+      
       - name: Push merged changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
