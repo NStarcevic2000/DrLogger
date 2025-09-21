@@ -1,17 +1,11 @@
 from PyQt5.QtWidgets import QTableView, QAbstractItemView
 from PyQt5.QtCore import QAbstractTableModel, Qt, QVariant
-from PyQt5.QtGui import QColor, QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QColor
 
 from pandas import DataFrame, Series
 
-from util.config_store import ConfigManager as CfgMan
 from logs_managing.logs_manager import LogsManager
-from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
 from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
-from logs_managing.metadata_utils import get_style_from_metadata
-from processor.processor_manager import ProcessorManager
-
-from gui.meatadata_content import MetadataContent
 
 class LogsTableModel(QAbstractTableModel):
     ''' Table model for displaying logs with metadata support. 
@@ -119,7 +113,8 @@ class RenderedLogsTable(QTableView):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.horizontalHeader().setStretchLastSection(True)
 
-        self.model = LogsTableModel()
+        self.data = None
+        self.styles = None
         
         self.cached_prerendered_data:DataFrame = DataFrame()
         self.cached_prerendered_metadata:DataFrame = DataFrame()
@@ -130,10 +125,12 @@ class RenderedLogsTable(QTableView):
             specific_rows: int | list[int] | None = None,
             show_collapsed: bool = True):
         self.setUpdatesEnabled(False)
+        self.data = LogsManager().get_data(rows=specific_rows, show_collapsed=show_collapsed)
+        self.styles = LogsManager().get_style(rows=specific_rows, show_collapsed=show_collapsed)
         self.setModel(
             LogsTableModel(
-                LogsManager().get_data(rows=specific_rows, show_collapsed=show_collapsed),
-                LogsManager().get_style(rows=specific_rows, show_collapsed=show_collapsed)
+                self.data,
+                self.styles
             )
         )
         self.resizeColumnsToContents()
@@ -142,12 +139,10 @@ class RenderedLogsTable(QTableView):
         self.horizontalHeader().setStretchLastSection(True)
         self.setUpdatesEnabled(True)
 
-    # def get_search_indexes(self, search_text: str, in_collapsed_data: bool=False) -> list[int]:
-    #     indexes = []
-    #     data = LogsManager().get_data(show_collapsed=in_collapsed_data)[0]
-    #     for row in range(len(data)):
-    #         for col in data.columns:
-    #             if search_text.lower() in str(data.at[row, col]).lower():
-    #                 indexes.append(row)
-    #                 break
-    #     return indexes
+    def get_search_indexes(self, search_text: str, show_collapsed: bool=True) -> list[int]:
+        if self.data is None:
+            self.data = LogsManager().get_data(show_collapsed=show_collapsed)
+        mask = self.data.astype(str).apply(lambda x: x.str.contains(search_text, case=False, na=False)).any(axis=1)
+        indexes = self.data.index[mask]
+        iloc_indexes = [self.data.index.get_loc(idx) for idx in indexes]
+        return iloc_indexes

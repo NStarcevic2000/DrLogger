@@ -61,7 +61,7 @@ class FindToolbar(QToolBar):
         self.hide()
 
     def restart_search(self):
-        idx_list = self.searchable_table.get_search_indexes(self.find_widget.text(), in_collapsed_data=True)
+        idx_list = self.searchable_table.get_search_indexes(self.find_widget.text(), show_collapsed=True)
         self.search_cache = (self.find_widget.text(), idx_list)
         self.searching_index = -1
         self.find_next()
