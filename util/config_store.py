@@ -32,6 +32,12 @@ class Config(dict):
         elif self.type == Enum:
             self.possible_values = self.value.get_values()
             self.value = self.possible_values[0]
+        
+        self.parent: ConfigStore = None
+
+    def bind_parent(self, parent:"ConfigStore"):
+        self.parent = parent
+        return self
 
     def get(self, default=None):
         return self.value if self.value is not None else default
@@ -80,6 +86,11 @@ class ConfigStore(dict):
         self.register(*args)
         self.on_warning = on_warning
         self.pm = presetsmanager
+        self.parent: ConfigStore = None
+
+    def bind_parent(self, parent:"ConfigStore"):
+        self.parent = parent
+        return self
     
     def register(self, *args: "ConfigStore | Config"):
         for arg in args:
@@ -87,7 +98,7 @@ class ConfigStore(dict):
                 if arg.name in self:
                     # raise ValueError(f"ConfigStore or Config with name {arg.name} already exists in {self.name}...")
                     return
-                self[arg.name] = arg
+                self[arg.name] = arg.bind_parent(self)
             else:
                 raise ValueError(f"Value for {arg} must be ConfigStore or Config, got {type(arg)}")
         # Generate namespaces for easy access
@@ -103,6 +114,12 @@ class ConfigStore(dict):
             except Exception as e:
                 self.fsmanager.write_to_file(self)
         return self
+    
+    def update_parent(self):
+        if self.fsmanager:
+            self.fsmanager.write_to_file(self)
+        if self.parent:
+            self.parent.update_parent()
 
     def get(self, key: str, default=None):
         # Split the key into parts for nested lookup
@@ -232,6 +249,7 @@ class ConfigStore(dict):
         preset_data = self.pm.get_preset(name)
         if preset_data:
             self.overlay_dict(preset_data, keep_new_fields=False)
+            self.update_parent()
 
 
 
