@@ -128,13 +128,12 @@ class LogsContainer():
             }]*len(self.metadata), index=self.metadata.index, name="Style")
         style_column = style_column.copy().combine(self.metadata.copy(), overlay_dict)
         if row is None:
-            return style_column[self.visible_rows] if show_collapsed else \
-                style_column
+            return style_column[self.visible_rows] if show_collapsed else style_column
         elif isinstance(row, int):
-            return style_column.head(row) if show_collapsed else \
+            return style_column[self.visible_rows].head(row) if show_collapsed else \
                 style_column.head(row)
         elif isinstance(row, list):
-            return style_column.loc[row] if show_collapsed else \
+            return style_column[self.visible_rows].loc[row] if show_collapsed else \
                 style_column.loc[row]
         else:
             raise ValueError("Invalid row index type.")
