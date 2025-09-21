@@ -39,7 +39,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.release_branch }}
           fetch-depth: 0
-        
+      
       - name: Merge from another branch (locally)
         run: |
           git config --global user.name "github-actions[bot]"
@@ -47,7 +47,7 @@ jobs:
           git fetch origin ${{ github.event.inputs.merge_branch }}
           git checkout ${{ github.event.inputs.release_branch }}
           git merge origin/${{ github.event.inputs.merge_branch }} --no-ff --commit -m "Merge branch '${{ github.event.inputs.merge_branch }}' into '${{ github.event.inputs.release_branch }}'"
-      
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -67,33 +67,21 @@ jobs:
         shell: bash
         run: |
           prefix="${{ github.event.inputs.release_branch }}"
-          echo "DEBUG: prefix=$prefix"
-
           tags=$(git tag -l "${prefix}.*" | sort -V)
-          echo "DEBUG: tags=$tags"
-
           if [[ -z "$tags" ]]; then
-            echo "DEBUG: No tags found for prefix $prefix"
-            next_patch=0
+            next_patch=1
           else
             latest_tag=$(echo "$tags" | tail -n1)
-            echo "DEBUG: latest_tag=$latest_tag"
             patch=${latest_tag##*.}
-            echo "DEBUG: patch=$patch"
             next_patch=$((patch + 1))
-            echo "DEBUG: next_patch=$next_patch"
           fi
-
           new_tag="${prefix}.${next_patch}"
-          echo "DEBUG: new_tag=$new_tag"
+          echo "NEW_TAG=$new_tag" >> $GITHUB_ENV
 
-          echo "NEW_TAG=tag/$new_tag" >> $GITHUB_ENV
-          echo "DEBUG: NEW_TAG=tag/$new_tag written to \$GITHUB_ENV"
-      
       - name: Tag Build
         run: |
           git tag "${{ env.NEW_TAG }}"
-
+      
       - name: Push merged changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
