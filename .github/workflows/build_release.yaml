@@ -67,16 +67,28 @@ jobs:
         shell: bash
         run: |
           prefix="${{ github.event.inputs.release_branch }}"
+          echo "DEBUG: prefix=$prefix"
+
           tags=$(git tag -l "${prefix}.*" | sort -V)
+          echo "DEBUG: tags=$tags"
+
           if [[ -z "$tags" ]]; then
+            echo "DEBUG: No tags found for prefix $prefix"
             next_patch=0
           else
             latest_tag=$(echo "$tags" | tail -n1)
+            echo "DEBUG: latest_tag=$latest_tag"
             patch=${latest_tag##*.}
+            echo "DEBUG: patch=$patch"
             next_patch=$((patch + 1))
+            echo "DEBUG: next_patch=$next_patch"
           fi
+
           new_tag="${prefix}.${next_patch}"
+          echo "DEBUG: new_tag=$new_tag"
+
           echo "NEW_TAG=tag/$new_tag" >> $GITHUB_ENV
+          echo "DEBUG: NEW_TAG=tag/$new_tag written to \$GITHUB_ENV"
       
       - name: Tag Build
         run: |
