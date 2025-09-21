@@ -69,7 +69,7 @@ jobs:
           prefix="${{ github.event.inputs.release_branch }}"
           tags=$(git tag -l "${prefix}.*" | sort -V)
           if [[ -z "$tags" ]]; then
-            next_patch=1
+            next_patch=0
           else
             latest_tag=$(echo "$tags" | tail -n1)
             patch=${latest_tag##*.}
