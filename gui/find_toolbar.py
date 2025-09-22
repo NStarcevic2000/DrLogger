@@ -31,10 +31,10 @@ class FindToolbar(QToolBar):
         self.find_all_button.clicked.connect(self.find_all)
         self.addWidget(self.find_all_button)
 
-        self.find_in_collapsed_checkbox = QCheckBox("In collapsed rows")
-        self.find_in_collapsed_checkbox.setChecked(False)
-        self.find_in_collapsed_checkbox.setToolTip("Search in collapsed rows instead of what is rendered...")
-        self.addWidget(self.find_in_collapsed_checkbox)
+        # self.find_in_collapsed_checkbox = QCheckBox("In collapsed rows")
+        # self.find_in_collapsed_checkbox.setChecked(False)
+        # self.find_in_collapsed_checkbox.setToolTip("Search in collapsed rows instead of what is rendered...")
+        # self.addWidget(self.find_in_collapsed_checkbox)
 
         self.close_button = QToolButton()
         self.close_button.setText("✕")
@@ -87,12 +87,13 @@ class FindToolbar(QToolBar):
         self.find_next(_recursion_guard + 1)
     
     def find_all(self):
+        #TODO: Reimplement "show_collapsed" instead of "True"
         if self.find_widget.text() and self.find_widget.text() != self.search_all_cache[0] or \
-           self.find_in_collapsed_checkbox.isChecked() != self.search_all_cache[1]:
-            show_collapsed = self.find_in_collapsed_checkbox.isChecked()
+           True != self.search_all_cache[1]:
+            show_collapsed = True #self.find_in_collapsed_checkbox.isChecked()
             # If we already cached search indexes for "Find Next", reuse them
             # Since "Find Next" always searches in collapsed data, only reuse if searching in collapsed data
-            if show_collapsed and self.find_widget.text() == self.search_cache[0]:
+            if True and self.find_widget.text() == self.search_cache[0]:
                 idx_list = self.search_cache[1]
             else:
                 # Iloc indexes
