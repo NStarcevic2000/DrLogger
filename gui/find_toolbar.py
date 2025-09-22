@@ -89,14 +89,17 @@ class FindToolbar(QToolBar):
     def find_all(self):
         if self.find_widget.text() and self.find_widget.text() != self.search_all_cache[0] or \
            self.find_in_collapsed_checkbox.isChecked() != self.search_all_cache[1]:
-            in_collapsed_data = self.find_in_collapsed_checkbox.isChecked()
+            show_collapsed = self.find_in_collapsed_checkbox.isChecked()
             # If we already cached search indexes for "Find Next", reuse them
             # Since "Find Next" always searches in collapsed data, only reuse if searching in collapsed data
-            if in_collapsed_data and self.find_widget.text() == self.search_cache[0]:
+            if show_collapsed and self.find_widget.text() == self.search_cache[0]:
                 idx_list = self.search_cache[1]
             else:
-                idx_list = self.searchable_table.get_search_indexes(self.find_widget.text(), in_collapsed_data=in_collapsed_data)
-            self.search_all_cache = (self.find_widget.text(), in_collapsed_data, idx_list)
+                # Iloc indexes
+                idx_list = self.searchable_table.get_search_indexes(self.find_widget.text(), show_collapsed=show_collapsed)
+                # Actual indexes
+                idx_list = [self.searchable_table.model()._visible_data.index[i] for i in idx_list]
+            self.search_all_cache = (self.find_widget.text(), show_collapsed, idx_list)
         # Show results in the footer table
         render_logs_table = FooterNotebook().get_widget(FOOTER_PAGE.FIND_RESULTS)
         if isinstance(render_logs_table, RenderedLogsTable):
