@@ -1,9 +1,8 @@
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QCheckBox, QLineEdit, QComboBox, QFrame, QFileDialog
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QFileDialog
 
 from PyQt5.QtCore import Qt
 
 from util.config_store import ConfigManager as CfgMan
-from processor.processor_manager import ProcessorManager
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
 from gui.common.enum_config_entry import EnumConfigEntry
@@ -52,7 +51,7 @@ class OpenFilesSection(QVBoxLayout):
             if len(files) == 1:
                 self.label.setText(format.format(files[0]))
             else:
-                self.label.setText(format.format(f"{'/'.join(files[0].split('/')[:-1])+"/..."} [{len(files)} files opened]"))
+                self.label.setText(f"{'/'.join(files[0].split('/')[:-1])+'/...'} [{len(files)} files opened]")
         else:
             self.label.setText("Open Logs: No files opened")
     
