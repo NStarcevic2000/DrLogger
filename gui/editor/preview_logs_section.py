@@ -8,7 +8,7 @@ from util.config_store import ConfigManager as CfgMan
 from processor.processor_manager import ProcessorManager
 from logs_managing.logs_manager import LogsManager
 
-from gui.rendered_logs_table import RenderedLogsTable
+from gui.common.rendered_logs_table import RenderedLogsTable
 
 class PreviewLogsSection(QVBoxLayout):
     def __init__(self, parent:None):
@@ -73,9 +73,10 @@ class PreviewLogsSection(QVBoxLayout):
         self.label.setEnabled(enabled)
 
     def update_preview_table(self):
-        self.preview_logs_table.refresh(
-            CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5)
-        )
+        ProcessorManager().run()
+        data = LogsManager().get_data(CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5), show_collapsed=True)
+        style = LogsManager().get_style(CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5), show_collapsed=True)
+        self.preview_logs_table.refresh(data,style)
 
     def preview_logs_cmd(self):
-        self.parent.status_bar.call_in_background(ProcessorManager().run, on_done=self.update_preview_table)
+        self.parent.status_bar.call(self.update_preview_table)

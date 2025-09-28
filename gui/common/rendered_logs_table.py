@@ -4,7 +4,6 @@ from PyQt5.QtGui import QColor
 
 from pandas import DataFrame, Series
 
-from logs_managing.logs_manager import LogsManager
 from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 
 class LogsTableModel(QAbstractTableModel):
@@ -104,7 +103,7 @@ class LogsTableModel(QAbstractTableModel):
 
 
 class RenderedLogsTable(QTableView):
-    def __init__(self):
+    def __init__(self, data:DataFrame=None, style:Series=None):
         super().__init__()
         self.setSortingEnabled(False)
         self.setModel(LogsTableModel(DataFrame(), DataFrame()))
@@ -113,35 +112,34 @@ class RenderedLogsTable(QTableView):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.horizontalHeader().setStretchLastSection(True)
 
-        self.data = None
-        self.styles = None
+        self.refresh(data, style)
         
         self.cached_prerendered_data:DataFrame = DataFrame()
         self.cached_prerendered_metadata:DataFrame = DataFrame()
         self.cached_visible_data:DataFrame = DataFrame()
         self.cached_metadata:DataFrame = DataFrame()
 
-    def refresh(self,
-            specific_rows: int | list[int] | None = None,
-            show_collapsed: bool = True):
+    def refresh(self, data:DataFrame=None, style:Series=None):
         self.setUpdatesEnabled(False)
-        self.data = LogsManager().get_data(rows=specific_rows, show_collapsed=show_collapsed)
-        self.styles = LogsManager().get_style(rows=specific_rows, show_collapsed=show_collapsed)
-        self.setModel(
-            LogsTableModel(
-                self.data,
-                self.styles
-            )
-        )
+        self.data = data
+        self.style = style
+        self.show_model()
         self.resizeColumnsToContents()
         # Last column does not expand indefinitely; horizontal scrolling enabled
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.horizontalHeader().setStretchLastSection(True)
         self.setUpdatesEnabled(True)
+    
+    def show_model(self):
+        if self.data is not None:
+            self.setModel(
+                LogsTableModel(
+                    self.data,
+                    self.style
+                )
+            )
 
     def get_search_indexes(self, search_text: str, show_collapsed: bool=True) -> list[int]:
-        if self.data is None:
-            self.data = LogsManager().get_data(show_collapsed=show_collapsed)
         mask = self.data.astype(str).apply(lambda x: x.str.contains(search_text, case=False, na=False)).any(axis=1)
         indexes = self.data.index[mask]
         iloc_indexes = [self.data.index.get_loc(idx) for idx in indexes]

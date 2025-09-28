@@ -11,8 +11,8 @@ RESERVED_METADATA_NAMES = get_namespaces({
         "ForegroundColor": "Foreground Color",
         "BackgroundColor": "Background Color"
     },
-    "CaptureRows": {
-        "CaptureRows": "Collapsed Rows",
+    "Capture Rows": {
+        "CaptureRows": "Captured Logs",
         "FromToIndexes": "From-To Indexes",
         "CollapsedInTotal": "Collapsed in Total"
     }

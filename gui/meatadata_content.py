@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 
 from pandas import DataFrame
 
+from gui.common.metadata_elements import MetadataType
 from util.singleton import singleton
 from logs_managing.logs_manager import LogsManager
 
@@ -53,9 +54,15 @@ class MetadataWidget(QWidget):
             self.setFrameShape(QFrame.StyledPanel)
             layout = QVBoxLayout()
             for key, value in details.items():
-                label = QLabel(f"<b>{key}:</b> {value}")
-                label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-                layout.addWidget(label)
+                if isinstance(value, MetadataType):
+                    label = QLabel(f"<b>{key}:</b>")
+                    label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+                    layout.addWidget(label)
+                    layout.addWidget(value.get_widget())
+                else:
+                    label = QLabel(f"<b>{key}:</b> {value}")
+                    label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+                    layout.addWidget(label)
             layout.addStretch(1)
             self.setLayout(layout)
             self.setVisible(False)
