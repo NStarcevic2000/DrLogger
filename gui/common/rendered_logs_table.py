@@ -36,7 +36,7 @@ class LogsTableModel(QAbstractTableModel):
         elif role == Qt.ForegroundRole:
             if self._styles is None or index.row() < 0 or index.row() >= len(self._styles):
                 return QColor("#000000")
-            fg = self._styles.iloc[index.row()][RMetaNS.General.name][RMetaNS.General.ForegroundColor]
+            fg = self._styles.iloc[index.row()][RMetaNS.General.name][RMetaNS.General.ForegroundColor].get_value()
             if fg:
                 return QColor(fg)
             else:
@@ -45,7 +45,7 @@ class LogsTableModel(QAbstractTableModel):
         elif role == Qt.BackgroundRole:
             if self._styles is None or index.row() < 0 or index.row() >= len(self._styles):
                 return QColor("#FFFFFF")
-            bg = self._styles.iloc[index.row()][RMetaNS.General.name][RMetaNS.General.BackgroundColor]
+            bg = self._styles.iloc[index.row()][RMetaNS.General.name][RMetaNS.General.BackgroundColor].get_value()
             if bg:
                 return QColor(bg)
             else:
