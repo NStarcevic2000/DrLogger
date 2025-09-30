@@ -29,7 +29,7 @@ $(VENV):
 
 $(OUT_EXEC): $(VENV) $(SPEC_FILE)
 	@echo "Building executable..."
-	@PYTHONPATH=src $(VENV)/Scripts/python -m PyInstaller $(SPEC_FILE)
+	@PYTHONPATH=src $(VENV)/Scripts/python -m PyInstaller --clean --noconfirm $(SPEC_FILE)
 
 run-test: $(VENV)
 	@echo "Run Tests..."
