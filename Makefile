@@ -1,28 +1,41 @@
-PYTHON=python3
-SRC=init.py
-OUT=dist
-EXE=$(OUT)/DrLogger.exe
-TEST_DIR=test
+PYTHON := python3
+VENV := .venv
+SRC_DIR := src
+DIST_DIR := dist
+TEST_DIR := $(SRC_DIR)/test
+APP_NAME := DrLogger
+REQS := requirements.txt
 
-.PHONY: all prep build run run-exec test clean
+SPEC_FILE := $(APP_NAME).spec
 
-all: build run-exec
+OUT_EXEC := $(DIST_DIR)/$(APP_NAME).exe
 
-prep: requirements.txt
-	$(PYTHON) -m pip install --upgrade pip
-	$(PYTHON) -m pip install -r requirements.txt
+.PHONY: all build run-test clean
 
-build: prep $(EXE)
-	$(PYTHON) -m PyInstaller --onefile --noconsole --name DrLogger --add-data "resources;resources" $(SRC)
+all: run-test build
 
-run: prep
-	$(PYTHON) $(SRC)
+$(VENV):
+	@if ! command -v $(PYTHON) >/dev/null 2>&1; then \
+		echo "$(PYTHON) not found. Please install Python 3.6+"; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(VENV)" ]; then \
+		echo "Creating virtual environment..."; \
+		$(PYTHON) -m venv $(VENV); \
+	fi
+	@. $(VENV)/Scripts/activate && python -m pip install --upgrade pip
+	@. $(VENV)/Scripts/activate && pip install -r $(REQS)
+	@. $(VENV)/Scripts/activate && pip install --upgrade pyinstaller
 
-run-exec: build $(EXE)
-	$(EXE)
+$(OUT_EXEC): $(VENV) $(SPEC_FILE) $(SRC_DIR)
+	@echo "Building executable..."
+	@PYTHONPATH=$(SRC_DIR) $(VENV)/Scripts/python -m PyInstaller $(SPEC_FILE)
 
-test: prep
-	$(PYTHON) -m unittest discover $(TEST_DIR)
+build: $(OUT_EXEC)
+
+run-test: $(VENV) $(SRC_DIR)
+	@echo "Run Tests..."
+	@PYTHONPATH=$(SRC_DIR) $(VENV)/Scripts/python -m unittest discover -s $(TEST_DIR)
 
 clean:
-	del /Q /S $(OUT)
+	rm -rf build dist $(VENV)
