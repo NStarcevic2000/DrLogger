@@ -10,9 +10,9 @@ SPEC_FILE := $(APP_NAME).spec
 
 OUT_EXEC := $(DIST_DIR)/$(APP_NAME).exe
 
-.PHONY: all build test clean run run-exec
+.PHONY: all build run-test clean
 
-all: $(OUT_EXEC)
+all: run-test build
 
 $(VENV):
 	@if ! command -v $(PYTHON) >/dev/null 2>&1; then \
@@ -27,13 +27,15 @@ $(VENV):
 	@. $(VENV)/Scripts/activate && pip install -r $(REQS)
 	@. $(VENV)/Scripts/activate && pip install --upgrade pyinstaller
 
-$(OUT_EXEC): $(VENV) $(SPEC_FILE)
+$(OUT_EXEC): $(VENV) $(SPEC_FILE) $(SRC_DIR)
 	@echo "Building executable..."
-	@PYTHONPATH=src $(VENV)/Scripts/python -m PyInstaller $(SPEC_FILE)
+	@PYTHONPATH=$(SRC_DIR) $(VENV)/Scripts/python -m PyInstaller $(SPEC_FILE)
 
-run-test: $(VENV)
+build: $(OUT_EXEC)
+
+run-test: $(VENV) $(SRC_DIR)
 	@echo "Run Tests..."
-	@PYTHONPATH=src $(VENV)/Scripts/python -m unittest discover -s $(TEST_DIR)
+	@PYTHONPATH=$(SRC_DIR) $(VENV)/Scripts/python -m unittest discover -s $(TEST_DIR)
 
 clean:
 	rm -rf build dist $(VENV)
