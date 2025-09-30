@@ -137,6 +137,12 @@ class RenderedLogsTable(QTableView):
                     self.style
                 )
             )
+    
+    def get_selected_rows(self) -> list[int]|None:
+        selected_indexes = self.selectionModel().selectedRows() if self.selectionModel() else None
+        if not selected_indexes or len(selected_indexes) == 0:
+            return None
+        return [index.row() for index in selected_indexes]
 
     def get_search_indexes(self, search_text: str, show_collapsed: bool=True) -> list[int]:
         mask = self.data.astype(str).apply(lambda x: x.str.contains(search_text, case=False, na=False)).any(axis=1)

@@ -8,6 +8,7 @@ from logs_managing.logs_manager import LogsManager
 from processor.processor_manager import ProcessorManager
 from util.config_store import ConfigManager as CfgMan
 
+from gui.save_logs_prompt import SaveLogsPrompt, SAVE_MODE
 from gui.editor.editor_prompt import EditorPrompt
 from gui.common.status_bar import StatusBar
 from gui.preset_prompt import PresetPrompt
@@ -50,6 +51,8 @@ class DrLoggerMainWindow(QMainWindow):
         self.main_table = RenderedLogsTable()
         self.main_table.doubleClicked.connect(self.handle_row_double_click)
 
+        self.save_logs_prompt = SaveLogsPrompt()
+
         self.toolbar = QToolBar("Main Toolbar")
         for action_name, callback in toolbar_cb.items():
             if isinstance(callback, dict):
@@ -82,6 +85,8 @@ class DrLoggerMainWindow(QMainWindow):
 
         QShortcut(QKeySequence("Ctrl++"), self, self.increase_font_size)
         QShortcut(QKeySequence("Ctrl+-"), self, self.decrease_font_size)
+
+        QShortcut(QKeySequence("Ctrl+C"), self, self.copy_selected_to_clipboard)
 
         QShortcut(QKeySequence(Qt.Key_Return), self, self.find_toolbar.find_next)
 
@@ -139,4 +144,7 @@ class DrLoggerMainWindow(QMainWindow):
         self.update()
     
     def save_logs_cmd(self):
-        pass
+        self.save_logs_prompt.show_updated(SAVE_MODE.FILE, self.main_table.get_selected_rows())
+    
+    def copy_selected_to_clipboard(self):
+        self.save_logs_prompt.show_updated(SAVE_MODE.CLIPBOARD, self.main_table.get_selected_rows())
