@@ -4,9 +4,11 @@ from typing import Callable
 from pandas import DataFrame
 from enum import Enum
 
+from gui.common.metadata_elements import MetadataLogLine
 from processor.processor_intf import IProcessor
 from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn, MetadataColumn
 from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
+from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
@@ -78,5 +80,5 @@ class OpenLogsProcessor(IProcessor):
         # Always return the 'Message' column
         result.append(DataColumn(data[RColNameNS.Message]))
         # We would like to keep the original messages for displaying them in detail
-        result.append(MetadataColumn(data['Original Messages']))
+        result.append(MetadataColumn(data['Original Messages'], category=RMetaNS.General.name, datatype=MetadataLogLine))
         return result

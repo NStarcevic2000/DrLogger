@@ -6,6 +6,7 @@ from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
 from logs_managing.logs_column_types import MetadataColumn
 from util.presets_manager import PresetsManager
+from gui.common.metadata_elements import MetadataColoredLabel
 
 
 class ColorLogsProcessor(IProcessor):
@@ -50,4 +51,7 @@ class ColorLogsProcessor(IProcessor):
                 data.loc[data["mask"], RMetaNS.General.ForegroundColor] = foreground
             if background:
                 data.loc[data["mask"], RMetaNS.General.BackgroundColor] = background
-        return [MetadataColumn(data[RMetaNS.General.ForegroundColor]), MetadataColumn(data[RMetaNS.General.BackgroundColor])]
+        return [
+            MetadataColumn(data[RMetaNS.General.ForegroundColor], category=RMetaNS.General.name, datatype=MetadataColoredLabel),
+            MetadataColumn(data[RMetaNS.General.BackgroundColor], category=RMetaNS.General.name, datatype=MetadataColoredLabel)
+        ]

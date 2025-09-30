@@ -4,8 +4,9 @@ from PyQt5.QtWidgets import QToolButton, QShortcut
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import Qt
 
-from gui.rendered_logs_table import RenderedLogsTable
+from gui.common.rendered_logs_table import RenderedLogsTable
 from gui.footer_notebook import FOOTER_PAGE, FooterNotebook
+from logs_managing.logs_manager import LogsManager
 
 class FindToolbar(QToolBar):
     def __init__(self,
@@ -103,15 +104,10 @@ class FindToolbar(QToolBar):
             self.search_all_cache = (self.find_widget.text(), show_collapsed, idx_list)
         # Show results in the footer table
         render_logs_table = FooterNotebook().get_widget(FOOTER_PAGE.FIND_RESULTS)
-        if isinstance(render_logs_table, RenderedLogsTable):
-            render_logs_table.refresh(
-                specific_rows=self.search_all_cache[2],
-                show_collapsed=self.search_all_cache[1]
-            )
-        else:
+        if not isinstance(render_logs_table, RenderedLogsTable):
             render_logs_table = RenderedLogsTable()
             FooterNotebook().set_widget(FOOTER_PAGE.FIND_RESULTS, render_logs_table)
-            render_logs_table.refresh(
-                specific_rows=self.search_all_cache[2],
-                show_collapsed=self.search_all_cache[1]
-            )
+        render_logs_table.refresh(
+            LogsManager().get_data(self.search_all_cache[2]),
+            LogsManager().get_style(self.search_all_cache[2])
+        )
