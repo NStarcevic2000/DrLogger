@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QMainWindow, QToolBar, QAction, QShortcut
+    QMainWindow, QToolBar, QAction, QShortcut, QFileDialog, QMenu, QToolButton
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
@@ -36,6 +36,10 @@ class DrLoggerMainWindow(QMainWindow):
         self.presets_prompt.setWindowFlag(Qt.WindowStaysOnTopHint, False)
 
         toolbar_cb = {
+            "File": {
+                "Open Logs...": self.open_logs_cmd,
+                "Save Logs...": self.save_logs_cmd,
+            },
             "Editor": self.editor_prompt.show_updated,
             "Presets": self.presets_prompt.show_updated,
         }
@@ -48,9 +52,23 @@ class DrLoggerMainWindow(QMainWindow):
 
         self.toolbar = QToolBar("Main Toolbar")
         for action_name, callback in toolbar_cb.items():
-            action = QAction(action_name, self)
-            action.triggered.connect(callback)
-            self.toolbar.addAction(action)
+            if isinstance(callback, dict):
+                menu = QMenu(action_name, self)
+                for sub_action_name, sub_callback in callback.items():
+                    sub_action = QAction(sub_action_name, self)
+                    sub_action.triggered.connect(sub_callback)
+                    menu.addAction(sub_action)
+                tool_button = QToolButton(self.toolbar)
+                tool_button.setText(action_name)
+                tool_button.setMenu(menu)
+                tool_button.setPopupMode(QToolButton.InstantPopup)
+                # Remove the arrow for collapsing by setting the popup mode to DelayedPopup and hiding the arrow
+                tool_button.setStyleSheet("QToolButton::menu-indicator { image: none; width: 0px; } QToolButton { padding-right: 0px; }")
+                self.toolbar.addWidget(tool_button)
+            else:
+                action = QAction(action_name, self)
+                action.triggered.connect(callback)
+                self.toolbar.addAction(action)
         self.addToolBar(Qt.TopToolBarArea, self.toolbar)
         self.toolbar.setMovable(False)
 
@@ -111,3 +129,14 @@ class DrLoggerMainWindow(QMainWindow):
     
     def handle_row_double_click(self, index):
         MetadataContent().show_in_footer(index.row())
+
+    def open_logs_cmd(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        files, _ = QFileDialog.getOpenFileNames(self, "Select Log Files", "", "All Files (*)", options=options)
+        if files:
+            CfgMan().set(CfgMan().r.open_logs.log_files, files)
+        self.update()
+    
+    def save_logs_cmd(self):
+        pass
