@@ -1,15 +1,20 @@
 PYTHON := python3
 VENV := .venv
-SRC := src
-DIST := dist
+SRC_DIR := src
+DIST_DIR := dist
+TEST_DIR := $(SRC_DIR)/test
 APP_NAME := DrLogger
 REQS := requirements.txt
 
-.PHONY: all clean run run-exec
+SPEC_FILE := $(APP_NAME).spec
 
-all: build
+OUT_EXEC := $(DIST_DIR)/$(APP_NAME).exe
 
-$(VENV) $(VENV)/Scripts/python $(VENV)/Scripts/activate:
+.PHONY: all build test clean run run-exec
+
+all: $(OUT_EXEC)
+
+$(VENV):
 	@if ! command -v $(PYTHON) >/dev/null 2>&1; then \
 		echo "$(PYTHON) not found. Please install Python 3.6+"; \
 		exit 1; \
@@ -22,16 +27,13 @@ $(VENV) $(VENV)/Scripts/python $(VENV)/Scripts/activate:
 	@. $(VENV)/Scripts/activate && pip install -r $(REQS)
 	@. $(VENV)/Scripts/activate && pip install --upgrade pyinstaller
 
-$(DIST)/$(APP_NAME).exe: $(VENV)/Scripts/python $(APP_NAME).spec
+$(OUT_EXEC): $(VENV) $(SPEC_FILE)
 	@echo "Building executable..."
-	@PYTHONPATH=src $(VENV)/Scripts/python -m PyInstaller $(APP_NAME).spec
+	@PYTHONPATH=src $(VENV)/Scripts/python -m PyInstaller $(SPEC_FILE)
 
-run: $(VENV)/Scripts/python
-	@echo "Run Executable..."
-	@PYTHONPATH=src $(VENV)/Scripts/python $(SRC)/init.py
-
-run-exec: $(VENV)/Scripts/activate $(DIST)/$(APP_NAME).exe
-	@. $(VENV)/Scripts/activate && ./$(DIST)/$(APP_NAME).exe
+run-test: $(VENV)
+	@echo "Run Tests..."
+	@. $(VENV)/Scripts/python -m unittest discover -s $(TEST_DIR)
 
 clean:
 	rm -rf build dist $(VENV)
