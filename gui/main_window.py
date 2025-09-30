@@ -4,12 +4,14 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
 
+from logs_managing.logs_manager import LogsManager
 from processor.processor_manager import ProcessorManager
+from util.config_store import ConfigManager as CfgMan
 
 from gui.editor.editor_prompt import EditorPrompt
 from gui.common.status_bar import StatusBar
 from gui.preset_prompt import PresetPrompt
-from gui.rendered_logs_table import RenderedLogsTable
+from gui.common.rendered_logs_table import RenderedLogsTable
 
 from gui.find_toolbar import FindToolbar
 from gui.footer_notebook import FooterNotebook, FOOTER_PAGE
@@ -87,8 +89,13 @@ class DrLoggerMainWindow(QMainWindow):
         self.set_table_font(self.font_size)
         self.main_table.verticalHeader().setDefaultSectionSize(self.font_size * 2)
     
+    def update_table(self):
+        data = LogsManager().get_data(show_collapsed=True)
+        style = LogsManager().get_style(show_collapsed=True)
+        self.main_table.refresh(data,style)
+
     def update(self):
-        self.status_bar.call_in_background(ProcessorManager().run, on_done=self.main_table.refresh)
+        self.status_bar.call_in_background(ProcessorManager().run, self.update_table)
 
     def set_QShortcut_action(self, button: str, action: callable):
         shortcut = QShortcut(QKeySequence(button), self)

@@ -6,6 +6,8 @@ from util.dict_merge import merge_dicts, overlay_dict
 from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
 from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 
+from gui.common.metadata_elements import MetadataColoredLabel, MetadataLogsSection
+
 class LogsContainer():
     ''' Container for both data and all its related properties and details. '''
     def __init__(self):
@@ -165,12 +167,12 @@ class LogsContainer():
         self.metadata.at[captured_header_idx] = merge_dicts(self.metadata.at[captured_header_idx],
         {
             RMetaNS.General.name: {
-                RMetaNS.General.ForegroundColor: "#878787",
-                RMetaNS.General.BackgroundColor: "#FFFFFF",
+                RMetaNS.General.ForegroundColor: MetadataColoredLabel("#878787"),
+                RMetaNS.General.BackgroundColor: MetadataColoredLabel("#FFFFFF"),
             },
             RMetaNS.CaptureRows.name: {
-                RMetaNS.CaptureRows.CaptureRows: captured_header_repl,
-                RMetaNS.CaptureRows.FromToIndexes: (first_row, last_row),
+                RMetaNS.CaptureRows.CaptureRows: MetadataLogsSection(captured_data, self.metadata[captured_data.index.to_list()]),
+                RMetaNS.CaptureRows.FromToIndexes: f"Lines {first_row} to {last_row}",
                 RMetaNS.CaptureRows.CollapsedInTotal: len(captured_data)
             }
         })
