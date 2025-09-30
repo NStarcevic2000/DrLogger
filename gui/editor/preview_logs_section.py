@@ -73,10 +73,9 @@ class PreviewLogsSection(QVBoxLayout):
         self.label.setEnabled(enabled)
 
     def update_preview_table(self):
-        ProcessorManager().run()
         data = LogsManager().get_data(CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5), show_collapsed=True)
         style = LogsManager().get_style(CfgMan().get(CfgMan().r.preferences.preview_max_lines, 5), show_collapsed=True)
         self.preview_logs_table.refresh(data,style)
 
     def preview_logs_cmd(self):
-        self.parent.status_bar.call(self.update_preview_table)
+        self.parent.status_bar.call_in_background(ProcessorManager().run, self.update_preview_table)

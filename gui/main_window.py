@@ -90,13 +90,12 @@ class DrLoggerMainWindow(QMainWindow):
         self.main_table.verticalHeader().setDefaultSectionSize(self.font_size * 2)
     
     def update_table(self):
-        ProcessorManager().run()
         data = LogsManager().get_data(show_collapsed=True)
         style = LogsManager().get_style(show_collapsed=True)
         self.main_table.refresh(data,style)
 
     def update(self):
-        self.status_bar.call(self.update_table)
+        self.status_bar.call_in_background(ProcessorManager().run, self.update_table)
 
     def set_QShortcut_action(self, button: str, action: callable):
         shortcut = QShortcut(QKeySequence(button), self)
