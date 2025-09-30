@@ -33,7 +33,7 @@ $(OUT_EXEC): $(VENV) $(SPEC_FILE)
 
 run-test: $(VENV)
 	@echo "Run Tests..."
-	@. $(VENV)/Scripts/python -m unittest discover -s $(TEST_DIR)
+	@PYTHONPATH=src $(VENV)/Scripts/python -m unittest discover -s $(TEST_DIR)
 
 clean:
 	rm -rf build dist $(VENV)
