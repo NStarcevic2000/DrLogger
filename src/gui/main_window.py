@@ -39,7 +39,7 @@ class DrLoggerMainWindow(QMainWindow):
         toolbar_cb = {
             "File": {
                 "Open Logs...": self.open_logs_cmd,
-                "Save Logs...": self.save_logs_cmd,
+                "Save Logs... (Ctrl+S)": self.save_logs_cmd,
             },
             "Editor": self.editor_prompt.show_updated,
             "Presets": self.presets_prompt.show_updated,
@@ -48,7 +48,7 @@ class DrLoggerMainWindow(QMainWindow):
         self.footer_notebook = FooterNotebook()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.footer_notebook)
 
-        self.main_table = RenderedLogsTable()
+        self.main_table = RenderedLogsTable(selectable=True)
         self.main_table.doubleClicked.connect(self.handle_row_double_click)
 
         self.save_logs_prompt = SaveLogsPrompt()
@@ -87,6 +87,7 @@ class DrLoggerMainWindow(QMainWindow):
         QShortcut(QKeySequence("Ctrl+-"), self, self.decrease_font_size)
 
         QShortcut(QKeySequence("Ctrl+C"), self, self.copy_selected_to_clipboard)
+        QShortcut(QKeySequence("Ctrl+S"), self, self.save_logs_cmd)
 
         QShortcut(QKeySequence(Qt.Key_Return), self, self.find_toolbar.find_next)
 

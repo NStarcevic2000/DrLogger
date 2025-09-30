@@ -38,6 +38,7 @@ class SaveLogsPrompt(QDialog):
         self.setMinimumSize(200, 200)
         self.main_layout = QVBoxLayout()
         self.main_layout.setAlignment(Qt.AlignTop)
+        self.setMinimumWidth(500)
         self.setLayout(self.main_layout)
 
         self.mode = SAVE_MODE.FILE
@@ -50,12 +51,14 @@ class SaveLogsPrompt(QDialog):
         self.selected_mode_label.setAlignment(Qt.AlignLeft)
         self.selected_mode_selector = QComboBox()
         self.selected_mode_selector.addItems(EXPORT_FORMAT.get_values())
+        self.selected_mode_selector.setMinimumWidth(120)
         self.selected_mode_selector.setCurrentIndex(0)
         self.selected_mode_selector.currentIndexChanged.connect(self.show_updated)
 
         self.delimiter_label = QLabel("Delimiter:")
         self.delimiter_selector = QComboBox()
         self.delimiter_selector.addItems(DELIMITER_TYPES.get_values())
+        self.delimiter_selector.setMinimumWidth(80)
         self.delimiter_selector.setCurrentIndex(0)
         self.delimiter_selector.currentIndexChanged.connect(self.show_updated)
         hbox = QHBoxLayout()
@@ -63,6 +66,7 @@ class SaveLogsPrompt(QDialog):
         hbox.addWidget(self.selected_mode_selector)
         hbox.addWidget(self.delimiter_label)
         hbox.addWidget(self.delimiter_selector)
+        hbox.addStretch()
         self.main_layout.addLayout(hbox)
 
         self.save_btn = QPushButton("Save")

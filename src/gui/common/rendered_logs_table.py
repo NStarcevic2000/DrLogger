@@ -107,14 +107,17 @@ class LogsTableModel(QAbstractTableModel):
 
 
 class RenderedLogsTable(QTableView):
-    def __init__(self, data:DataFrame=None, style:Series=None):
+    def __init__(self, data:DataFrame=None, style:Series=None, selectable:bool=False):
         super().__init__()
         self.data = data if data is not None else DataFrame()
         self.style = style if style is not None else Series()
         self.setSortingEnabled(False)
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        if selectable:
+            self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        else:
+            self.setSelectionMode(QAbstractItemView.NoSelection)
         self.horizontalHeader().setStretchLastSection(True)
 
     def refresh(self, data:DataFrame=None, style:Series=None):
