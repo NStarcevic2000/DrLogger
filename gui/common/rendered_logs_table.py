@@ -34,6 +34,8 @@ class LogsTableModel(QAbstractTableModel):
             return str(self._visible_data.iloc[index.row(), index.column()])
         # Foreground role = use metadata column if available
         elif role == Qt.ForegroundRole:
+            if self._styles is None or index.row() < 0 or index.row() >= len(self._styles):
+                return QColor("#000000")
             fg = self._styles.iloc[index.row()][RMetaNS.General.name][RMetaNS.General.ForegroundColor]
             if fg:
                 return QColor(fg)
@@ -41,6 +43,8 @@ class LogsTableModel(QAbstractTableModel):
                 return QColor("#000000")
         # Background role = use metadata column if available
         elif role == Qt.BackgroundRole:
+            if self._styles is None or index.row() < 0 or index.row() >= len(self._styles):
+                return QColor("#FFFFFF")
             bg = self._styles.iloc[index.row()][RMetaNS.General.name][RMetaNS.General.BackgroundColor]
             if bg:
                 return QColor(bg)
@@ -105,30 +109,25 @@ class LogsTableModel(QAbstractTableModel):
 class RenderedLogsTable(QTableView):
     def __init__(self, data:DataFrame=None, style:Series=None):
         super().__init__()
+        self.data = data if data is not None else DataFrame()
+        self.style = style if style is not None else Series()
         self.setSortingEnabled(False)
-        self.setModel(LogsTableModel(DataFrame(), DataFrame()))
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.horizontalHeader().setStretchLastSection(True)
 
-        self.refresh(data, style)
-        
-        self.cached_prerendered_data:DataFrame = DataFrame()
-        self.cached_prerendered_metadata:DataFrame = DataFrame()
-        self.cached_visible_data:DataFrame = DataFrame()
-        self.cached_metadata:DataFrame = DataFrame()
-
     def refresh(self, data:DataFrame=None, style:Series=None):
         self.setUpdatesEnabled(False)
-        self.data = data
-        self.style = style
+        self.data = data if data is not None else self.data
+        self.style = style if style is not None else self.style
         self.show_model()
         self.resizeColumnsToContents()
         # Last column does not expand indefinitely; horizontal scrolling enabled
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.horizontalHeader().setStretchLastSection(True)
         self.setUpdatesEnabled(True)
+        return self
     
     def show_model(self):
         if self.data is not None:

@@ -3,6 +3,7 @@ from typing import Union, List
 from typing import final
 from enum import Enum
 
+from gui.common.metadata_elements import MetadataType
 from logs_managing.logs_container import LogsContainer
 from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNS
 from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
@@ -46,7 +47,8 @@ class MetadataColumn(Series):
     def __init__(self,
                  data:Series|list,
                  name:str=None,
-                 category:str=None):
+                 category:str=None,
+                 datatype:MetadataType=None):
         # Initialized from Series or list
         if isinstance(data, Series):
             if data.name is not None:
@@ -65,12 +67,13 @@ class MetadataColumn(Series):
         # Category is just a string, but we can use predefined ones
         self.__category = category if category is not None else \
             RMetaNS.General.name
+        self.__datatype = datatype
 
     @final
     def process(self, logs_container:LogsContainer):
         metadata = Series([{
             self.__category: {
-                self.name: row_val
+                self.name: self.__datatype(row_val) if self.__datatype is not None else row_val
             },
         } for row_val in self.astype(str)], name=self.name)
         logs_container.set_metadata(metadata)

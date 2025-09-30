@@ -115,9 +115,10 @@ class MetadataContent():
             In case of running in a background, it will request this one to be done immediatly.
         '''
         index = self.metadata.index[index]
-        if self.metadata.at[index, self.__WIDGET] is not None:
+        widget = self.metadata.at[index, self.__WIDGET]
+        if widget is not None:
             if show_in_footer:
-                FooterNotebook().set_widget(FOOTER_PAGE.METADATA, self.metadata.at[index, self.__WIDGET])
+                FooterNotebook().set_widget(FOOTER_PAGE.METADATA, widget)
         else:
             widget = MetadataWidget(self.metadata.at[index, self.__METADATA])
             self.metadata.at[index, self.__WIDGET] = widget
