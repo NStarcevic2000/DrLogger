@@ -8,11 +8,12 @@ from logs_managing.logs_manager import LogsManager
 from processor.processor_manager import ProcessorManager
 from util.config_store import ConfigManager as CfgMan
 
-from gui.save_logs_prompt import SaveLogsPrompt, SAVE_MODE
+from gui.save_logs_prompt import SaveLogsPrompt
 from gui.editor.editor_prompt import EditorPrompt
 from gui.common.status_bar import StatusBar
 from gui.preset_prompt import PresetPrompt
 from gui.common.rendered_logs_table import RenderedLogsTable
+from gui.main_toolbar import MainToolbar
 
 from gui.find_toolbar import FindToolbar
 from gui.footer_notebook import FooterNotebook, FOOTER_PAGE
@@ -36,14 +37,6 @@ class DrLoggerMainWindow(QMainWindow):
         self.presets_prompt.setWindowModality(Qt.ApplicationModal)
         self.presets_prompt.setWindowFlag(Qt.WindowStaysOnTopHint, False)
 
-        toolbar_cb = {
-            "File": {
-                "Open Logs...": self.open_logs_cmd,
-                "Save Logs... (Ctrl+S)": self.save_logs_cmd,
-            },
-            "Editor": self.editor_prompt.show_updated,
-            "Presets": self.presets_prompt.show_updated,
-        }
 
         self.footer_notebook = FooterNotebook()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.footer_notebook)
@@ -53,25 +46,16 @@ class DrLoggerMainWindow(QMainWindow):
 
         self.save_logs_prompt = SaveLogsPrompt()
 
-        self.toolbar = QToolBar("Main Toolbar")
-        for action_name, callback in toolbar_cb.items():
-            if isinstance(callback, dict):
-                menu = QMenu(action_name, self)
-                for sub_action_name, sub_callback in callback.items():
-                    sub_action = QAction(sub_action_name, self)
-                    sub_action.triggered.connect(sub_callback)
-                    menu.addAction(sub_action)
-                tool_button = QToolButton(self.toolbar)
-                tool_button.setText(action_name)
-                tool_button.setMenu(menu)
-                tool_button.setPopupMode(QToolButton.InstantPopup)
-                # Remove the arrow for collapsing by setting the popup mode to DelayedPopup and hiding the arrow
-                tool_button.setStyleSheet("QToolButton::menu-indicator { image: none; width: 0px; } QToolButton { padding-right: 0px; }")
-                self.toolbar.addWidget(tool_button)
-            else:
-                action = QAction(action_name, self)
-                action.triggered.connect(callback)
-                self.toolbar.addAction(action)
+        self.toolbar = MainToolbar({
+            "File": {
+                "Open Logs...": self.open_logs_cmd,
+                "Save All Logs... (Ctrl+S)": self.save_logs_cmd,
+                "Save Selected Logs...": self.save_selected_logs_cmd,
+                "Copy Selected Logs to Clipboard (Ctrl+C)": self.copy_selected_to_clipboard,
+            },
+            "Editor": self.editor_prompt.show_updated,
+            "Presets": self.presets_prompt.show_updated,
+        }, self)
         self.addToolBar(Qt.TopToolBarArea, self.toolbar)
         self.toolbar.setMovable(False)
 
@@ -145,7 +129,16 @@ class DrLoggerMainWindow(QMainWindow):
         self.update()
     
     def save_logs_cmd(self):
-        self.save_logs_prompt.show_updated(SAVE_MODE.FILE, self.main_table.get_selected_rows())
+        SaveLogsPrompt().save_to_file(
+            LogsManager().get_data()
+        )
+
+    def save_selected_logs_cmd(self):
+        SaveLogsPrompt().save_to_file(
+            LogsManager().get_data(rows=self.main_table.get_selected_rows()[1])
+        )
     
     def copy_selected_to_clipboard(self):
-        self.save_logs_prompt.show_updated(SAVE_MODE.CLIPBOARD, self.main_table.get_selected_rows())
+        SaveLogsPrompt().save_to_clipboard(
+            LogsManager().get_data(rows=self.main_table.get_selected_rows()[1])
+        )

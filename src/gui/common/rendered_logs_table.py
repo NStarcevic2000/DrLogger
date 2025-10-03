@@ -145,10 +145,13 @@ class RenderedLogsTable(QTableView):
         selected_indexes = self.selectionModel().selectedRows() if self.selectionModel() else None
         if not selected_indexes or len(selected_indexes) == 0:
             return None
-        return [index.row() for index in selected_indexes]
+        iloc_indexes = [index.row() for index in selected_indexes]
+        loc_indexes = [self.data.index[idx] for idx in iloc_indexes]
+        return (iloc_indexes, loc_indexes)
 
-    def get_search_indexes(self, search_text: str, show_collapsed: bool=True) -> list[int]:
+    def get_search_indexes(self, search_text: str) -> list[int]:
         mask = self.data.astype(str).apply(lambda x: x.str.contains(search_text, case=False, na=False)).any(axis=1)
         indexes = self.data.index[mask]
         iloc_indexes = [self.data.index.get_loc(idx) for idx in indexes]
-        return iloc_indexes
+        loc_indexes = [self.data.index[idx] for idx in iloc_indexes]
+        return (iloc_indexes, loc_indexes)
