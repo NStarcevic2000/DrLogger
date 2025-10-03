@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLabel, QComboBox, QCheckBox, QHBoxLayout, QTextEdit, QLineEdit
 from PyQt5.QtCore import Qt
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_manager import ConfigManager as CfgMan
 import json
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 from PyQt5.QtWidgets import QTableWidgetItem

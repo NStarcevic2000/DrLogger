@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 
 from enum import Enum
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_manager import ConfigManager as CfgMan
 from gui.common.config_entry_intf import IConfigEntry
 
 class TABLE_EDIT_TYPE(Enum):

@@ -6,7 +6,7 @@ from PyQt5.QtGui import QFont, QKeySequence
 
 from logs_managing.logs_manager import LogsManager
 from processor.processor_manager import ProcessorManager
-from util.config_store import ConfigManager as CfgMan
+from util.config_manager import ConfigManager as CfgMan
 
 from gui.save_logs_prompt import SaveLogsPrompt
 from gui.editor.editor_prompt import EditorPrompt

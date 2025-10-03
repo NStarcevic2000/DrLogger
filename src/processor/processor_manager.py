@@ -4,7 +4,7 @@ import time
 from util.singleton import singleton
 from logs_managing.logs_manager import LogsManager
 from logs_managing.logs_column_types import COLUMN_TYPE
-from util.config_store import ConfigManager as CfgMan
+from util.config_manager import ConfigManager as CfgMan
 from processor.processor_intf import IProcessor
 from processor.open_logs_processor import OpenLogsProcessor
 from processor.split_log_lines_processor import SplitLogLinesProcessor

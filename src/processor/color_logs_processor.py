@@ -1,7 +1,7 @@
 from pandas import DataFrame
 
 from processor.processor_intf import IProcessor
-from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
+from util.config_manager import ConfigManager as CfgMan, ConfigStore, Config
 from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
 from logs_managing.logs_column_types import MetadataColumn

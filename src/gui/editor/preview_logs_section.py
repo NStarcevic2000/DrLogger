@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 
 from pandas import DataFrame
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_manager import ConfigManager as CfgMan
 from processor.processor_manager import ProcessorManager
 from logs_managing.logs_manager import LogsManager
 

@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QFile
 
 from PyQt5.QtCore import Qt
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_manager import ConfigManager as CfgMan
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
 from gui.common.enum_config_entry import EnumConfigEntry

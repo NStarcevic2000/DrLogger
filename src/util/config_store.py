@@ -250,14 +250,3 @@ class ConfigStore(dict):
         if preset_data:
             self.overlay_dict(preset_data, keep_new_fields=False)
             self.update_parent()
-
-
-
-
-
-@singleton
-class ConfigManager(ConfigStore):
-    def __init__(self):
-        super().__init__("ConfigManager",
-                         fsmanager=FileStorageManager(None, "session")
-        )

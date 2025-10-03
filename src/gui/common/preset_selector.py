@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QComboBox, QHBoxLayout, QLabel, QPushButton
 import json
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_manager import ConfigManager as CfgMan
 from enum import Enum
 
 from gui.common.config_entry_intf import IConfigEntry

@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QFrame
 
 from PyQt5.QtCore import Qt
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_manager import ConfigManager as CfgMan
 from gui.common.preset_selector import PresetSelector
 
 from gui.common.string_config_entry import StringConfigEntry

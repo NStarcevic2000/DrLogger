@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QComboBox, QCheckBox
 
 from PyQt5.QtCore import Qt
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_manager import ConfigManager as CfgMan
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
 
 from gui.common.preset_selector import PresetSelector

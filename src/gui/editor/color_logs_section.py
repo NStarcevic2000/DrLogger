@@ -3,7 +3,7 @@ from PyQt5.QtGui import QColor
 
 from PyQt5.QtCore import Qt
 
-from util.config_store import ConfigManager as CfgMan
+from util.config_manager import ConfigManager as CfgMan
 from gui.common.preset_selector import PresetSelector
 from gui.common.table_config_entry import TableConfigEntry, TABLE_EDIT_TYPE
 from gui.common.bool_config_entry import BoolConfigEntry

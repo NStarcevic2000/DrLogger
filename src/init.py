@@ -4,7 +4,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 
 from processor.processor_manager import ProcessorManager
-from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
+from util.config_manager import ConfigManager as CfgMan, ConfigStore, Config
 from logs_managing.logs_manager import LogsManager
 from util.presets_manager import PresetsManager
 from util.config_enums import (
@@ -20,14 +20,6 @@ if __name__ == "__main__":
 
     # Initialization purposes
     ProcessorManager()
-    
-    CfgMan().register(
-            ConfigStore("preferences",
-            Config("autoSave", True, type_of=bool),
-            Config("preview_max_lines", 5, type_of=int),
-            Config("presets_location_path", "", type_of=str)
-        )
-    )
 
     viewer = DrLoggerMainWindow()
     viewer.show()

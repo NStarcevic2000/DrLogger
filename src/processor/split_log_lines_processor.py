@@ -7,7 +7,7 @@ import re
 from processor.processor_intf import IProcessor
 from logs_managing.logs_column_types import COLUMN_TYPE, DataColumn
 from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
-from util.config_store import ConfigManager as CfgMan, ConfigStore, Config
+from util.config_manager import ConfigManager as CfgMan, ConfigStore, Config
 from util.presets_manager import PresetsManager
 
 class SplitLogLinesProcessor(IProcessor):
