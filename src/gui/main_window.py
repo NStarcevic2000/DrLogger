@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QMainWindow, QToolBar, QAction, QShortcut
+    QMainWindow, QToolBar, QAction, QShortcut, QFileDialog, QMenu, QToolButton
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
@@ -8,10 +8,12 @@ from logs_managing.logs_manager import LogsManager
 from processor.processor_manager import ProcessorManager
 from util.config_store import ConfigManager as CfgMan
 
+from gui.save_logs_prompt import SaveLogsPrompt
 from gui.editor.editor_prompt import EditorPrompt
 from gui.common.status_bar import StatusBar
 from gui.preset_prompt import PresetPrompt
 from gui.common.rendered_logs_table import RenderedLogsTable
+from gui.main_toolbar import MainToolbar
 
 from gui.find_toolbar import FindToolbar
 from gui.footer_notebook import FooterNotebook, FOOTER_PAGE
@@ -35,22 +37,25 @@ class DrLoggerMainWindow(QMainWindow):
         self.presets_prompt.setWindowModality(Qt.ApplicationModal)
         self.presets_prompt.setWindowFlag(Qt.WindowStaysOnTopHint, False)
 
-        toolbar_cb = {
-            "Editor": self.editor_prompt.show_updated,
-            "Presets": self.presets_prompt.show_updated,
-        }
 
         self.footer_notebook = FooterNotebook()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.footer_notebook)
 
-        self.main_table = RenderedLogsTable()
+        self.main_table = RenderedLogsTable(selectable=True)
         self.main_table.doubleClicked.connect(self.handle_row_double_click)
 
-        self.toolbar = QToolBar("Main Toolbar")
-        for action_name, callback in toolbar_cb.items():
-            action = QAction(action_name, self)
-            action.triggered.connect(callback)
-            self.toolbar.addAction(action)
+        self.save_logs_prompt = SaveLogsPrompt()
+
+        self.toolbar = MainToolbar({
+            "File": {
+                "Open Logs...": self.open_logs_cmd,
+                "Save All Logs... (Ctrl+S)": self.save_logs_cmd,
+                "Save Selected Logs...": self.save_selected_logs_cmd,
+                "Copy Selected Logs to Clipboard (Ctrl+C)": self.copy_selected_to_clipboard,
+            },
+            "Editor": self.editor_prompt.show_updated,
+            "Presets": self.presets_prompt.show_updated,
+        }, self)
         self.addToolBar(Qt.TopToolBarArea, self.toolbar)
         self.toolbar.setMovable(False)
 
@@ -64,6 +69,9 @@ class DrLoggerMainWindow(QMainWindow):
 
         QShortcut(QKeySequence("Ctrl++"), self, self.increase_font_size)
         QShortcut(QKeySequence("Ctrl+-"), self, self.decrease_font_size)
+
+        QShortcut(QKeySequence("Ctrl+C"), self, self.copy_selected_to_clipboard)
+        QShortcut(QKeySequence("Ctrl+S"), self, self.save_logs_cmd)
 
         QShortcut(QKeySequence(Qt.Key_Return), self, self.find_toolbar.find_next)
 
@@ -111,3 +119,26 @@ class DrLoggerMainWindow(QMainWindow):
     
     def handle_row_double_click(self, index):
         MetadataContent().show_in_footer(index.row())
+
+    def open_logs_cmd(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        files, _ = QFileDialog.getOpenFileNames(self, "Select Log Files", "", "All Files (*)", options=options)
+        if files:
+            CfgMan().set(CfgMan().r.open_logs.log_files, files)
+        self.update()
+    
+    def save_logs_cmd(self):
+        SaveLogsPrompt().save_to_file(
+            LogsManager().get_data()
+        )
+
+    def save_selected_logs_cmd(self):
+        SaveLogsPrompt().save_to_file(
+            LogsManager().get_data(rows=self.main_table.get_selected_rows()[1])
+        )
+    
+    def copy_selected_to_clipboard(self):
+        SaveLogsPrompt().save_to_clipboard(
+            LogsManager().get_data(rows=self.main_table.get_selected_rows()[1])
+        )

@@ -8,6 +8,7 @@ RESERVED_COLUMN_NAMES = get_namespaces({
 
 RESERVED_METADATA_NAMES = get_namespaces({
     "General": {
+        "OriginalLogs": "Original Logs",
         "ForegroundColor": "Foreground Color",
         "BackgroundColor": "Background Color"
     },

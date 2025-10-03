@@ -107,14 +107,17 @@ class LogsTableModel(QAbstractTableModel):
 
 
 class RenderedLogsTable(QTableView):
-    def __init__(self, data:DataFrame=None, style:Series=None):
+    def __init__(self, data:DataFrame=None, style:Series=None, selectable:bool=False):
         super().__init__()
         self.data = data if data is not None else DataFrame()
         self.style = style if style is not None else Series()
         self.setSortingEnabled(False)
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        if selectable:
+            self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        else:
+            self.setSelectionMode(QAbstractItemView.NoSelection)
         self.horizontalHeader().setStretchLastSection(True)
 
     def refresh(self, data:DataFrame=None, style:Series=None):
@@ -137,9 +140,18 @@ class RenderedLogsTable(QTableView):
                     self.style
                 )
             )
+    
+    def get_selected_rows(self) -> list[int]|None:
+        selected_indexes = self.selectionModel().selectedRows() if self.selectionModel() else None
+        if not selected_indexes or len(selected_indexes) == 0:
+            return None
+        iloc_indexes = [index.row() for index in selected_indexes]
+        loc_indexes = [self.data.index[idx] for idx in iloc_indexes]
+        return (iloc_indexes, loc_indexes)
 
-    def get_search_indexes(self, search_text: str, show_collapsed: bool=True) -> list[int]:
+    def get_search_indexes(self, search_text: str) -> list[int]:
         mask = self.data.astype(str).apply(lambda x: x.str.contains(search_text, case=False, na=False)).any(axis=1)
         indexes = self.data.index[mask]
         iloc_indexes = [self.data.index.get_loc(idx) for idx in indexes]
-        return iloc_indexes
+        loc_indexes = [self.data.index[idx] for idx in iloc_indexes]
+        return (iloc_indexes, loc_indexes)

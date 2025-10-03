@@ -68,7 +68,7 @@ class OpenLogsProcessor(IProcessor):
                     rows.append({
                         RColNameNS.File: visible_file_value,
                         RColNameNS.Message: line,
-                        'Original Messages': line
+                        RMetaNS.General.OriginalLogs: line
                     })
         print(f"Opened {len(rows)} log lines from {len(file_paths)} files.")
         print(rows[:5])
@@ -80,5 +80,5 @@ class OpenLogsProcessor(IProcessor):
         # Always return the 'Message' column
         result.append(DataColumn(data[RColNameNS.Message]))
         # We would like to keep the original messages for displaying them in detail
-        result.append(MetadataColumn(data['Original Messages'], category=RMetaNS.General.name, datatype=MetadataLogLine))
+        result.append(MetadataColumn(data[RMetaNS.General.OriginalLogs], category=RMetaNS.General.name, datatype=MetadataLogLine))
         return result

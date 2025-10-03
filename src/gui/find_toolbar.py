@@ -62,7 +62,7 @@ class FindToolbar(QToolBar):
         self.hide()
 
     def restart_search(self):
-        idx_list = self.searchable_table.get_search_indexes(self.find_widget.text(), show_collapsed=True)
+        idx_list = self.searchable_table.get_search_indexes(self.find_widget.text())[0]
         self.search_cache = (self.find_widget.text(), idx_list)
         self.searching_index = -1
         self.find_next()
@@ -97,10 +97,8 @@ class FindToolbar(QToolBar):
             if True and self.find_widget.text() == self.search_cache[0]:
                 idx_list = self.search_cache[1]
             else:
-                # Iloc indexes
-                idx_list = self.searchable_table.get_search_indexes(self.find_widget.text(), show_collapsed=show_collapsed)
-                # Actual indexes
-                idx_list = [self.searchable_table.model()._visible_data.index[i] for i in idx_list]
+                # Indexes
+                idx_list = self.searchable_table.get_search_indexes(self.find_widget.text())[1]
             self.search_all_cache = (self.find_widget.text(), show_collapsed, idx_list)
         # Show results in the footer table
         render_logs_table = FooterNotebook().get_widget(FOOTER_PAGE.FIND_RESULTS)
