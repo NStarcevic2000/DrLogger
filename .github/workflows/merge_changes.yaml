@@ -1,11 +1,5 @@
 name: 'Merge Feature Branch'
 
-env:
-  Releases: |
-    master
-    release/v1.0
-    release/v1.1
-
 on:
   workflow_dispatch:
     inputs:
@@ -13,7 +7,10 @@ on:
         description: 'Select branch(es) to merge changes into'
         required: true
         type: choice
-        options: ${{ env.Releases }}
+        options:
+          - 'master'
+          - 'release/v1.0'
+          - 'release/v1.1'
         multiple: true
       feature_branch:
         description: 'Feature branch'
