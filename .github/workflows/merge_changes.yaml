@@ -26,11 +26,6 @@ jobs:
     runs-on: windows-latest
     continue-on-error: false
     steps:
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -100,8 +95,8 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          base: ${{ github.event.inputs.release_branch }}
-          head: ${{ env.INTEGRATION_BRANCH }}
+          base: origin/${{ github.event.inputs.release_branch }}
+          head: origin/${{ env.INTEGRATION_BRANCH }}
           title: "Squash cherrypick changes from ${{ github.event.inputs.feature_branch }} into ${{ github.event.inputs.release_branch }}"
           body: |
             This pull request was automatically created to squash cherrypick changes from `${{ github.event.inputs.feature_branch }}` into `${{ github.event.inputs.release_branch }}`.
