@@ -73,6 +73,7 @@ jobs:
         shell: bash
         run: |
           integration_branch=${{ env.INTEGRATION_BRANCH }}
+          git checkout $integration_branch
           if [ ! -s commits_to_cherrypick.txt ]; then
             echo "No commits to cherry-pick."
             exit 0
