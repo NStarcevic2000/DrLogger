@@ -44,7 +44,7 @@ jobs:
       - name: Create integration branch for selected release branch
         id: create_integration_branch
         run: |
-          integration_branch="integration/${{ github.event.inputs.release_branch //\//- }}-$(date +%Y%m%d%H%M%S)"
+          integration_branch="integration/${{ github.event.inputs.release_branch }}/${{ github.event.inputs.feature_branch }}"
           git checkout -b "$integration_branch"
           echo "Created integration branch: $integration_branch"
           echo "$integration_branch" > integration_branches.txt
