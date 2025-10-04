@@ -15,11 +15,6 @@ on:
         description: 'Feature branch'
         required: true
         type: string
-      is_a_prerelease:
-        description: 'Is this a prerelease?'
-        required: true
-        type: boolean
-        default: false
 
 jobs:
   build:
@@ -38,7 +33,9 @@ jobs:
         shell: bash
         run: |
           git fetch origin ${{ github.event.inputs.feature_branch }}:${{ github.event.inputs.feature_branch }} || true
-          git log master..${{ github.event.inputs.feature_branch }} --pretty=format:"%H" > commits_to_cherrypick.txt
+          git log origin/master..${{ github.event.inputs.feature_branch }} --pretty=format:"%H" > commits_to_cherrypick.txt
+          echo "Commits to cherry-pick:"
+          cat commits_to_cherrypick.txt
       
       - name: Cherry-pick commits
         id: cherry_pick_commits
