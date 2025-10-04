@@ -61,6 +61,8 @@ jobs:
         shell: bash
         run: |
           rm -rf commits_to_cherrypick.txt
+          echo "Cleanup done."
+          echo "Status: $(git status)"
 
       - name: Create squashed pull request
         uses: peter-evans/create-pull-request@v5
