@@ -73,11 +73,11 @@ class OpenLogsProcessor(IProcessor):
         print(f"Opened {len(rows)} log lines from {len(file_paths)} files.")
         print(rows[:5])
         data = DataFrame(rows, dtype=str).reset_index(drop=True)
-        # Optionally, return the 'File' column if requested
+        # Optionally, return the RColNameNS.File column if requested
         result = []
         if keepSourceFileLocation != KEEP_SOURCE_FILE_LOCATION_ENUM.NONE:
             result.append(DataColumn(data[RColNameNS.File]))
-        # Always return the 'Message' column
+        # Always return the RColNameNS.Message column
         result.append(DataColumn(data[RColNameNS.Message]))
         # We would like to keep the original messages for displaying them in detail
         result.append(MetadataColumn(data[RMetaNS.General.OriginalLogs], category=RMetaNS.General.name, datatype=MetadataLogLine))

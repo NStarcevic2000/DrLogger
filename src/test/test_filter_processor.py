@@ -5,9 +5,11 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 
 from util.config_enums import CONTEXTUALIZE_LINES_ENUM
-from processor.filter_logs_processor import FilterLogsProcessor, FILTERED_LINE
+from processor.filter_logs_processor import FilterLogsProcessor
 from logs_managing.logs_manager import LogsManager
-from logs_managing.logs_column_types import CaptureMessageColumn, DataColumn, MetadataColumn
+from logs_managing.logs_column_types import CaptureMessageColumn, DataColumn
+from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
+
 from util.test_util import assert_columns_by_type
 
 class TestFilterLogsProcessor(unittest.TestCase):
@@ -16,7 +18,7 @@ class TestFilterLogsProcessor(unittest.TestCase):
 
     def test_process_no_filter_patterns(self):
         # Test when no filter patterns are provided
-        input_df = DataFrame({'Message': ['line1', 'line2', 'line3']})
+        input_df = DataFrame({RColNameNS.Message: ['line1', 'line2', 'line3']})
         ret_columns = self.processor.process(input_df.copy(),
             filter_pattern_arg=[],
             contextualize_lines_count_arg=0,
@@ -25,7 +27,7 @@ class TestFilterLogsProcessor(unittest.TestCase):
         assert ret_columns is None
 
     def test_process_basic_filtering(self):
-        input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
+        input_df = DataFrame({RColNameNS.Message: ['info message', 'error occurred', 'debug info']})
         ret_columns = self.processor.process(input_df.copy(),
             filter_pattern_arg=[["Message", "error"]],
             contextualize_lines_count_arg=0,
@@ -34,16 +36,16 @@ class TestFilterLogsProcessor(unittest.TestCase):
         expected_columns = [(CaptureMessageColumn, "Filter")]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
-            DataColumn(input_df['Message']),
+            DataColumn(input_df[RColNameNS.Message]),
         ]+ret_columns)
         expected_df = DataFrame({
-            'Message': ['<Filtered 1 row(s)>', 'error occurred', '<Filtered 1 row(s)>'],
+            RColNameNS.Message: ['<Filtered 1 row(s)>', 'error occurred', '<Filtered 1 row(s)>'],
         })
         assert_frame_equal(result_df, expected_df, check_dtype=False)
 
     def test_process_with_contextualization(self):
         # Test contextualization of filtered lines
-        input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
+        input_df = DataFrame({RColNameNS.Message: ['info message', 'error occurred', 'debug info']})
         ret_columns = self.processor.process(input_df.copy(),
             filter_pattern_arg=[["Message", "error"]],
             contextualize_lines_count_arg=1,
@@ -53,17 +55,17 @@ class TestFilterLogsProcessor(unittest.TestCase):
         print(list(ret_columns[0]))
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
-            DataColumn(input_df['Message'])
+            DataColumn(input_df[RColNameNS.Message])
         ]+ret_columns)
         print(result_df)
         expected_df = DataFrame({
-            'Message': ['info message', 'error occurred', 'debug info'],
+            RColNameNS.Message: ['info message', 'error occurred', 'debug info'],
         })
         assert_frame_equal(result_df, expected_df, check_dtype=False)
 
 
 
-        input_df = DataFrame({'Message': ['line1', 'line2', 'error occurred', 'line4', 'line5']})
+        input_df = DataFrame({RColNameNS.Message: ['line1', 'line2', 'error occurred', 'line4', 'line5']})
         ret_columns = self.processor.process(input_df.copy(),
             filter_pattern_arg=[["Message", "error"]],
             contextualize_lines_count_arg=1,
@@ -72,15 +74,15 @@ class TestFilterLogsProcessor(unittest.TestCase):
         expected_columns = [(CaptureMessageColumn, "Filter")]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
-            DataColumn(input_df['Message'])
+            DataColumn(input_df[RColNameNS.Message])
         ]+ret_columns)
         expected_df = DataFrame({
-            'Message': ['<Filtered 1 row(s)>', 'line2', 'error occurred', 'line4', '<Filtered 1 row(s)>'],
+            RColNameNS.Message: ['<Filtered 1 row(s)>', 'line2', 'error occurred', 'line4', '<Filtered 1 row(s)>'],
         })
         assert_frame_equal(result_df, expected_df, check_dtype=False)
 
         # With 0, it will behave as a type specified NONE = Only filtered lines are kept, no context
-        input_df = DataFrame({'Message': ['line1', 'line2', 'error occurred', 'line4', 'line5']})
+        input_df = DataFrame({RColNameNS.Message: ['line1', 'line2', 'error occurred', 'line4', 'line5']})
         ret_columns = self.processor.process(input_df.copy(),
             filter_pattern_arg=[["Message", "error"]],
             contextualize_lines_count_arg=0,
@@ -89,10 +91,10 @@ class TestFilterLogsProcessor(unittest.TestCase):
         expected_columns = [(CaptureMessageColumn, "Filter")]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
-            DataColumn(input_df['Message'], name='Message')
+            DataColumn(input_df[RColNameNS.Message], name=RColNameNS.Message)
         ]+ret_columns)
         expected_df = DataFrame({
-            'Message': ['<Filtered 2 row(s)>', 'error occurred', '<Filtered 2 row(s)>'],
+            RColNameNS.Message: ['<Filtered 2 row(s)>', 'error occurred', '<Filtered 2 row(s)>'],
         })
         assert_frame_equal(result_df.reset_index(drop=True), expected_df, check_dtype=False)
 
@@ -100,7 +102,7 @@ class TestFilterLogsProcessor(unittest.TestCase):
         # Test filtering with multiple patterns
         # Should match row with both error in Message AND warning in Type (none in this case)
         input_df = DataFrame({
-            'Message': ['line1 error', 'line2 warning', 'line3 info', 'line4 error'],
+            RColNameNS.Message: ['line1 error', 'line2 warning', 'line3 info', 'line4 error'],
             'Type': ['line1 type1', 'line2 type2', 'line3 type3', 'line4 type4']
         }).reset_index(drop=True)
         ret_columns = self.processor.process(input_df.copy(),
@@ -111,18 +113,18 @@ class TestFilterLogsProcessor(unittest.TestCase):
         expected_columns = [(CaptureMessageColumn, "Filter")]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
-            DataColumn(input_df['Message']),
+            DataColumn(input_df[RColNameNS.Message]),
             DataColumn(input_df['Type'])
         ]+ret_columns)
         expected_df = DataFrame({
-            'Message': ['<Filtered 1 row(s)>', 'line2 warning', 'line3 info', '<Filtered 1 row(s)>'],
+            RColNameNS.Message: ['<Filtered 1 row(s)>', 'line2 warning', 'line3 info', '<Filtered 1 row(s)>'],
             'Type': ['line1 type1', 'line2 type2', 'line3 type3', 'line4 type4']
         })
         assert_frame_equal(result_df.reset_index(drop=True), expected_df, check_dtype=False)
 
     def test_process_empty_dataframe(self):
         # Test with empty DataFrame
-        input_df = DataFrame({'Message': []})
+        input_df = DataFrame({RColNameNS.Message: []})
         ret_columns = self.processor.process(input_df.copy(),
             filter_pattern_arg=[["Message", "error"]],
             contextualize_lines_count_arg=0,
@@ -132,7 +134,7 @@ class TestFilterLogsProcessor(unittest.TestCase):
 
     def test_process_skip_empty_patterns(self):
         # Test skipping empty patterns
-        input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
+        input_df = DataFrame({RColNameNS.Message: ['info message', 'error occurred', 'debug info']})
         ret_columns = self.processor.process(input_df.copy(),
             filter_pattern_arg=[["", ""], ["Message", "error"]],
             contextualize_lines_count_arg=0,
@@ -141,16 +143,16 @@ class TestFilterLogsProcessor(unittest.TestCase):
         expected_columns = [(CaptureMessageColumn, "Filter")]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
-            DataColumn(input_df['Message'])
+            DataColumn(input_df[RColNameNS.Message])
         ]+ret_columns)
         expected_df = DataFrame({
-            'Message': ['<Filtered 1 row(s)>', 'error occurred', '<Filtered 1 row(s)>'],
+            RColNameNS.Message: ['<Filtered 1 row(s)>', 'error occurred', '<Filtered 1 row(s)>'],
         })
         assert_frame_equal(result_df.reset_index(drop=True), expected_df, check_dtype=False)
 
     def test_process_default_message_column(self):
         # Test using default Message column when pattern_column is empty
-        input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
+        input_df = DataFrame({RColNameNS.Message: ['info message', 'error occurred', 'debug info']})
         ret_columns = self.processor.process(input_df.copy(),
             filter_pattern_arg=[["", "error"]],
             contextualize_lines_count_arg=0,
@@ -159,13 +161,13 @@ class TestFilterLogsProcessor(unittest.TestCase):
         expected_columns = [(CaptureMessageColumn, "Filter")]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data([
-            DataColumn(input_df['Message'])
+            DataColumn(input_df[RColNameNS.Message])
         ]+ret_columns)
-        expected_df = DataFrame({'Message': ['<Filtered 1 row(s)>', 'error occurred', '<Filtered 1 row(s)>']})
+        expected_df = DataFrame({RColNameNS.Message: ['<Filtered 1 row(s)>', 'error occurred', '<Filtered 1 row(s)>']})
         assert_frame_equal(result_df.reset_index(drop=True), expected_df, check_dtype=False)
     
     def test_process_with_hidden_logs_kept(self):
-        input_df = DataFrame({'Message': ['info message', 'error occurred', 'debug info']})
+        input_df = DataFrame({RColNameNS.Message: ['info message', 'error occurred', 'debug info']})
         ret_columns = self.processor.process(input_df.copy(),
             filter_pattern_arg=[["Message", "error"]],
             contextualize_lines_count_arg=0,
@@ -174,7 +176,7 @@ class TestFilterLogsProcessor(unittest.TestCase):
         expected_columns = [(CaptureMessageColumn, "Filter")]
         assert_columns_by_type(ret_columns, expected_columns)
         result_df = LogsManager().simulate_rendered_data(
-            [DataColumn(input_df['Message'])] + ret_columns,
+            [DataColumn(input_df[RColNameNS.Message])] + ret_columns,
         )
         print(result_df)
         # Only the second row is the same
