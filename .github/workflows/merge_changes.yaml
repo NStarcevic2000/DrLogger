@@ -29,7 +29,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.feature_branch }}
+          ref: ${{ github.event.inputs.release_branch }}
           fetch-depth: 0
           fetch-tags: true
       
