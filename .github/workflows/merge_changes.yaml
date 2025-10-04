@@ -41,17 +41,24 @@ jobs:
       - name: Fetch all branches
         shell: bash
         run: git fetch --all
-
-      - name: Create integration branch for selected release branch
-        id: create_integration_branch
+      
+      - name: Check if there is anything to merge
+        id: check_merge
         shell: bash
         run: |
-          integration_branch="integration/${{ github.event.inputs.release_branch }}/${{ github.event.inputs.feature_branch }}"
-          git checkout -b "$integration_branch"
-          echo "Created integration branch: $integration_branch"
-          echo "$integration_branch" > integration_branches.txt
-          echo "integration_branch=$integration_branch" >> $GITHUB_OUTPUT
-      
+          if git rev-parse --verify origin/${{ github.event.inputs.release_branch }} >/dev/null 2>&1; then
+            echo "Release branch exists."
+          else
+            echo "Release branch does not exist. Exiting."
+            exit 1
+          fi
+          if [ "$(git rev-list --count origin/${{ github.event.inputs.feature_branch }} ^origin/${{ github.event.inputs.release_branch }})" -eq 0 ]; then
+            echo "No new commits to merge from ${{ github.event.inputs.feature_branch }} to ${{ github.event.inputs.release_branch }}. Exiting."
+            exit 1
+          else
+            echo "There are new commits to merge."
+          fi
+
       - name: Create list of commits to cherrypick (based from master)
         id: list_commits
         shell: bash
@@ -60,6 +67,14 @@ jobs:
           git fetch origin ${{ github.event.inputs.feature_branch }}:${{ github.event.inputs.feature_branch }}
           git log master..${{ github.event.inputs.feature_branch }} --pretty=format:"%H" > commits_to_cherrypick.txt
           echo "commits_to_cherrypick=$(cat commits_to_cherrypick.txt)" >> $GITHUB_OUTPUT
+
+      - name: Create integration branch for selected release branch
+        id: create_integration_branch
+        shell: bash
+        run: |
+          integration_branch="integration/${{ github.event.inputs.release_branch }}/${{ github.event.inputs.feature_branch }}"
+          git checkout -b "$integration_branch"
+          echo "integration_branch=$integration_branch" >> $GITHUB_OUTPUT
       
       - name: Cherry-pick commits into integration branch
         id: cherry_pick_commits
@@ -69,8 +84,6 @@ jobs:
             echo "No commits to cherry-pick."
             exit 0
           fi
-          integration_branch=$(cat integration_branches.txt)
-          git checkout "$integration_branch"
           while IFS= read -r commit; do
             git cherry-pick "$commit" || {
               echo "Conflict occurred while cherry-picking commit $commit into $integration_branch. Aborting cherry-pick."
