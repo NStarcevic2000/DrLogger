@@ -1,4 +1,7 @@
 name: 'Merge Feature Branch'
+# Requires DrLoggerReleases enviorment properly set up
+# Within it, RELEASES variable should contain a comma-separated list
+# of release branches, e.g. "release/1.0,release/2.0"
 
 on:
   workflow_dispatch:
@@ -7,7 +10,7 @@ on:
         description: 'Select branch(es) to merge changes into'
         required: true
         type: choice
-        options: ${{ vars.Releases }}
+        options: ${{ env.RELEASES }}
         multiple: true
       feature_branch:
         description: 'Feature branch'
