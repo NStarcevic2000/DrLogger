@@ -1,0 +1,92 @@
+name: 'Merge Feature Branch'
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: 'Select branch to merge changes into'
+        required: true
+        type: multiselect
+        options: ${{ vars.Releases }}
+      feature_branch:
+        description: 'Feature branch'
+        required: true
+        type: string
+      is_a_prerelease:
+        description: 'Is this a prerelease?'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    continue-on-error: false
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Checkout specific branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.feature_branch }}
+          fetch-depth: 0
+
+      - name: Create a list of release branches
+        id: create_release_branch_list
+        run: |
+          echo "release_branches=${{ github.event.inputs.release_branch }}" | tr ',' '\n' > release_branches.txt
+          echo "release_branches=$(cat release_branches.txt)" >> $GITHUB_OUTPUT
+
+      - name: Create integration branches for each release branch
+        id: create_integration_branches
+        run: |
+          while IFS= read -r release_branch; do
+            integration_branch="integration/${release_branch//\//-}-$(date +%Y%m%d%H%M%S)"
+            git checkout -b "$integration_branch"
+            echo "Created integration branch: $integration_branch"
+            echo "$integration_branch" >> integration_branches.txt
+          done < release_branches.txt
+          echo "integration_branches=$(cat integration_branches.txt)" >> $GITHUB_OUTPUT
+      
+      - name: Create list of commits to cherrypick (based from master)
+        id: list_commits
+        run: |
+          git log origin/${{ github.event.inputs.feature_branch }}..master --pretty=format:"%H" > commits_to_cherrypick.txt
+          echo "commits_to_cherrypick=$(cat commits_to_cherrypick.txt)" >> $GITHUB_OUTPUT
+      
+      - name: Cherry-pick commits into each integration branch
+        id: cherry_pick_commits
+        run: |
+          while IFS= read -r integration_branch; do
+            git checkout "$integration_branch"
+            while IFS= read -r commit; do
+              git cherry-pick "$commit" || {
+                echo "Conflict occurred while cherry-picking commit $commit into $integration_branch. Aborting cherry-pick."
+                git cherry-pick --abort
+                exit 1
+              }
+            done < commits_to_cherrypick.txt
+            echo "Cherry-picked commits into $integration_branch"
+          done < integration_branches.txt
+      
+      - name: Push integration branches and create squashed pull requests
+        run: |
+          while IFS= read -r integration_branch; do
+          git push origin "$integration_branch"
+            gh pr create \
+              --base "${integration_branch#integration/}" \
+              --head "$integration_branch" \
+              --title "Squash cherrypick changes from ${{ github.event.inputs.feature_branch }} into ${integration_branch#integration/}" \
+              --body "This pull request was automatically created to squash cherrypick changes from \`${{ github.event.inputs.feature_branch }}\` into \`${integration_branch#integration/}\`.\n\nPlease review the changes and resolve any conflicts if necessary." \
+              --label "automated-cherry-pick" \
+              --draft=false
+          done < integration_branches.txt
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
