@@ -58,6 +58,7 @@ jobs:
           echo "Cherry-picked commits into integration/${{ github.event.inputs.feature_branch }}-to-${{ github.event.inputs.release_branch }}"
 
       - name: Cleanup before PR creation
+        shell: bash
         run: |
           rm -rf commits_to_cherrypick.txt
 
