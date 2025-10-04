@@ -4,10 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       release_branch:
-        description: 'Select branch to merge changes into'
+        description: 'Select branch(es) to merge changes into'
         required: true
-        type: multiselect
+        type: choice
         options: ${{ vars.Releases }}
+        multiple: true
       feature_branch:
         description: 'Feature branch'
         required: true
