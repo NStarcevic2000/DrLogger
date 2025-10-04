@@ -70,13 +70,13 @@ class SplitLogLinesProcessor(IProcessor):
         agg_format = re.sub(r'<(.+?)>', r'{}', timestamp_format_arg)
         if timestamp_format_arg:
             if False not in [tag in data.columns for tag in timestamp_tags]:
-                # Apply extraction from columns to 'Timestamp' column
+                # Apply extraction from columns to RColNameNS.Timestamp column
                 # Insert as column 2
                 timestamp_col = data[timestamp_tags].apply(
                     lambda row: agg_format.format(*row.values) if all(isinstance(val, str) and val!="" for val in row.values) else "",
                     axis=1
                 )
-                data.insert(len(timestamp_tags)+1, 'Timestamp', timestamp_col)
+                data.insert(len(timestamp_tags)+1, RColNameNS.Timestamp, timestamp_col)
                 data.drop(columns=timestamp_tags, inplace=True, errors='ignore')
 
         # Remove matched part (including separators) from RColNameNS.Message to get only the remaining message

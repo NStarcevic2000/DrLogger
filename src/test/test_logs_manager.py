@@ -32,8 +32,8 @@ class TestLogsManager(unittest.TestCase):
     def test_simulate_rendered_data_only_data_column(self):
         # Test simulate_rendered_data with a simple DataFrame
         # Column created from DataFrame
-        input_df = DataFrame({'Message': ['line1', 'line2', 'line3']})
-        col_list = [DataColumn(input_df['Message'])]
+        input_df = DataFrame({RColNameNS.Message: ['line1', 'line2', 'line3']})
+        col_list = [DataColumn(input_df[RColNameNS.Message])]
         result_df = LogsManager().simulate_rendered_data(col_list)
         assert_frame_equal(result_df, input_df, check_dtype=False)
     
@@ -45,10 +45,10 @@ class TestLogsManager(unittest.TestCase):
         # Test with multiple data columns
         # Column created from DataFrame
         input_df = DataFrame({
-            'Message': ['line1', 'line2', 'line3'],
+            RColNameNS.Message: ['line1', 'line2', 'line3'],
             'Level': ['info', 'error', 'debug']
         })
-        col_list = [DataColumn(input_df['Message']), DataColumn(input_df['Level'])]
+        col_list = [DataColumn(input_df[RColNameNS.Message]), DataColumn(input_df['Level'])]
         result_df = LogsManager().simulate_rendered_data(col_list)
         assert_frame_equal(result_df, input_df, check_dtype=False)
 
@@ -62,16 +62,16 @@ class TestLogsManager(unittest.TestCase):
         # Test with starting DataFrame and column that modifies it
         # Order matters
         starting_df = DataFrame({
-            'Message': ['line1', 'line2', 'line3']
+            RColNameNS.Message: ['line1', 'line2', 'line3']
         })
         col_list = [
             DataColumn(['A', 'B', 'C'], name='Category'),
-            DataColumn(starting_df['Message'].str.upper(), name='Message')
+            DataColumn(starting_df[RColNameNS.Message].str.upper(), name=RColNameNS.Message)
         ]
         result_df = LogsManager().simulate_rendered_data(col_list)
         assert_frame_equal(result_df, DataFrame({
             'Category': ['A', 'B', 'C'],
-            'Message': ['LINE1', 'LINE2', 'LINE3']
+            RColNameNS.Message: ['LINE1', 'LINE2', 'LINE3']
         }), check_dtype=False)
 
         # DataColumn is always casted to string
@@ -87,16 +87,16 @@ class TestLogsManager(unittest.TestCase):
         # Metadata is not kept in the final DataFrame, but we can test that processing works
         # Column created from DataFrame
         input_df = DataFrame({
-            'Message': ['line1', 'line2', 'line3'],
+            RColNameNS.Message: ['line1', 'line2', 'line3'],
             'Category': ['info', 'error', 'debug']
         })
         col_list = [
-            DataColumn(input_df['Message']),
+            DataColumn(input_df[RColNameNS.Message]),
             MetadataColumn(input_df['Category'])
         ]
         result_df = LogsManager().simulate_rendered_data(col_list)
         expected_df = DataFrame({
-            'Message': ['line1', 'line2', 'line3']
+            RColNameNS.Message: ['line1', 'line2', 'line3']
         })
         assert_frame_equal(result_df, expected_df, check_dtype=False)
     
@@ -105,18 +105,18 @@ class TestLogsManager(unittest.TestCase):
     def test_simulate_rendered_data_with_collapsing_rows(self):
         # Test simulate_rendered_data with collapsing rows
         input_df = DataFrame({
-            'Message': ['line1', 'line2', 'line3', 'line4', 'line5'],
+            RColNameNS.Message: ['line1', 'line2', 'line3', 'line4', 'line5'],
             'Category': ['info', 'error', 'debug', 'info', 'error'],
             'Collapsing Rows': [None, None, 'line3', None, None]
         })
         col_list = [
-            DataColumn(input_df['Message']),
+            DataColumn(input_df[RColNameNS.Message]),
             MetadataColumn(input_df['Category']),
             CaptureMessageColumn(input_df['Collapsing Rows'], name="Collapsing Rows", replace='<Collapsed {count}>')
         ]
         result_df = LogsManager().simulate_rendered_data(col_list)
         expected_df = DataFrame({
-            'Message': ['<Collapsed 2>', 'line3', '<Collapsed 2>']
+            RColNameNS.Message: ['<Collapsed 2>', 'line3', '<Collapsed 2>']
         })
         print(result_df)
         assert_frame_equal(result_df.reset_index(drop=True), expected_df, check_dtype=False)
@@ -130,7 +130,7 @@ class TestLogsManager(unittest.TestCase):
             DataColumn(['Sender1', 'Sender2', 'Sender3'], name='From'),
             DataColumn(['Receiver1', 'Receiver2', 'Receiver3'], name='To'),
             DataColumn(['Success', 'Failed', 'Success'], name='Category'),
-            DataColumn(['Random Message1', 'Random Message2', 'Random Message3'], name='Message'),
+            DataColumn(['Random Message1', 'Random Message2', 'Random Message3'], name=RColNameNS.Message),
             MetadataColumn(['TCP', 'UDP', 'TCP'], name='Protocol', category='Network')
         ]
 
@@ -139,7 +139,7 @@ class TestLogsManager(unittest.TestCase):
             'From': ['Sender1', 'Sender2', 'Sender3'],
             'To': ['Receiver1', 'Receiver2', 'Receiver3'],
             'Category': ['Success', 'Failed', 'Success'],
-            'Message': ['<Collapsed>', 'Random Message2', '<Collapsed>']
+            RColNameNS.Message: ['<Collapsed>', 'Random Message2', '<Collapsed>']
         })
         print(result_df)
         assert_frame_equal(result_df, expected_df, check_dtype=False)
@@ -149,14 +149,14 @@ class TestLogsManager(unittest.TestCase):
             DataColumn(['A', 'B', 'C', 'D', 'E', 'F'], name='Letters'),
             DataColumn(['1', '2', '3', '4', '5', '6'], name='Numbers'),
             MetadataColumn(['Success', 'Failed', 'Success', 'Failed', 'Success', 'Failed'], name='Category'),
-            DataColumn(['Message1', 'Message2', 'Message3', 'Message4', 'Message5', 'Message6'], name='Message'),
+            DataColumn(['Message1', 'Message2', 'Message3', 'Message4', 'Message5', 'Message6'], name=RColNameNS.Message),
             CaptureMessageColumn([None, None, '<Special Override Message>', 'Message4', 'Message5', None], name="Collapsing Rows", replace="<Collapsed>"),
         ]
         result_df = LogsManager().simulate_rendered_data(col_list)
         expected_df = DataFrame({
             'Letters': ['C', 'D', 'E', 'F'],
             'Numbers': ['3', '4', '5', '6'],
-            'Message': ['<Special Override Message>', 'Message4', 'Message5', '<Collapsed>']
+            RColNameNS.Message: ['<Special Override Message>', 'Message4', 'Message5', '<Collapsed>']
         })
         print(result_df)
         assert_frame_equal(result_df.reset_index(drop=True), expected_df, check_dtype=False)
@@ -171,16 +171,16 @@ class TestLogsManager(unittest.TestCase):
 
         # Add initial data
         input_df = DataFrame({
-            'Message': ['line1', 'line2', 'line3'],
+            RColNameNS.Message: ['line1', 'line2', 'line3'],
             'Level': ['info', 'error', 'debug']
         })
         LogsManager().add_new_columns([
-            DataColumn(input_df['Message'], name='Message'),
+            DataColumn(input_df[RColNameNS.Message], name=RColNameNS.Message),
             MetadataColumn(input_df['Level'], name='Level')
         ])
         visible_df = LogsManager().get_data()
         assert_frame_equal(visible_df, DataFrame({
-            'Message': ['line1', 'line2', 'line3']
+            RColNameNS.Message: ['line1', 'line2', 'line3']
         }), check_dtype=False)
 
         # Add more columns
@@ -189,18 +189,18 @@ class TestLogsManager(unittest.TestCase):
         ])
         visible_df = LogsManager().get_data()
         assert_frame_equal(visible_df, DataFrame({
-            'Message': ['line1', 'line2', 'line3'],
+            RColNameNS.Message: ['line1', 'line2', 'line3'],
             'Category': ['A', 'B', 'C']
         }), check_dtype=False)
 
         # Modify existing column
         LogsManager().add_new_columns([
-            DataColumn(input_df['Message'].str.upper(), name='Message')
+            DataColumn(input_df[RColNameNS.Message].str.upper(), name=RColNameNS.Message)
         ])
         visible_df = LogsManager().get_data()
         assert_frame_equal(visible_df, DataFrame({
             'Category': ['A', 'B', 'C'],
-            'Message': ['LINE1', 'LINE2', 'LINE3'],
+            RColNameNS.Message: ['LINE1', 'LINE2', 'LINE3'],
         }), check_dtype=False)
 
         # Collapse rows
@@ -210,5 +210,5 @@ class TestLogsManager(unittest.TestCase):
         visible_df = LogsManager().get_data()
         assert_frame_equal(visible_df, DataFrame({
             'Category': ['A', 'B', 'C'],
-            'Message': ['<Collapsed>', 'LINE2', '<Collapsed>'],
+            RColNameNS.Message: ['<Collapsed>', 'LINE2', '<Collapsed>'],
         }), check_dtype=False)
