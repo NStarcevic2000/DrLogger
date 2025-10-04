@@ -1,30 +1,3 @@
-name: 'Merge Feature Branch'
-
-on:
-  workflow_dispatch:
-    inputs:
-      release_branch:
-        description: 'Select branch to merge changes into'
-        required: true
-        type: choice
-        options:
-          - 'master'
-          - 'release/v1.1'
-          - 'release/v1.0'
-      feature_branch:
-        description: 'Feature branch'
-        required: true
-        type: string
-      is_a_prerelease:
-        description: 'Is this a prerelease?'
-        required: true
-        type: boolean
-        default: false
-
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   build:
     runs-on: windows-latest
@@ -43,6 +16,7 @@ jobs:
 
       - name: Create integration branch for selected release branch
         id: create_integration_branch
+        shell: bash
         run: |
           integration_branch="integration/${{ github.event.inputs.release_branch }}/${{ github.event.inputs.feature_branch }}"
           git checkout -b "$integration_branch"
@@ -52,12 +26,14 @@ jobs:
       
       - name: Create list of commits to cherrypick (based from master)
         id: list_commits
+        shell: bash
         run: |
           git log origin/${{ github.event.inputs.feature_branch }}..master --pretty=format:"%H" > commits_to_cherrypick.txt
           echo "commits_to_cherrypick=$(cat commits_to_cherrypick.txt)" >> $GITHUB_OUTPUT
       
       - name: Cherry-pick commits into integration branch
         id: cherry_pick_commits
+        shell: bash
         run: |
           if [ ! -s commits_to_cherrypick.txt ]; then
             echo "No commits to cherry-pick."
@@ -77,6 +53,7 @@ jobs:
       - name: Push integration branch and create squashed pull request
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
           integration_branch=$(cat integration_branches.txt)
           git push origin "$integration_branch"
