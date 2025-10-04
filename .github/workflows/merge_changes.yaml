@@ -11,6 +11,7 @@ on:
           - 'master'
           - 'release/v1.0'
           - 'release/v1.1'
+        hint: 'Will merge to all branches above selected one'
       feature_branch:
         description: 'Feature branch'
         required: true
