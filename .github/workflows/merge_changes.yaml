@@ -63,8 +63,6 @@ jobs:
         id: list_commits
         shell: bash
         run: |
-          git fetch origin ${{ github.event.inputs.feature_branch }}
-          git fetch origin ${{ github.event.inputs.release_branch }}
           git log master..${{ github.event.inputs.feature_branch }} --pretty=format:"%H" > commits_to_cherrypick.txt
           echo "commits_to_cherrypick=$(cat commits_to_cherrypick.txt)" >> $GITHUB_OUTPUT
 
