@@ -52,11 +52,12 @@ jobs:
             echo "Release branch does not exist. Exiting."
             exit 1
           fi
-          if [ "$(git rev-list --count ${{ github.event.inputs.feature_branch }} ^${{ github.event.inputs.release_branch }})" -eq 0 ]; then
+          new_commits=$(git rev-list --count ${{ github.event.inputs.feature_branch }} ^${{ github.event.inputs.release_branch }})
+          if [ "$new_commits" -eq 0 ]; then
             echo "No new commits to merge from ${{ github.event.inputs.feature_branch }} to ${{ github.event.inputs.release_branch }}. Exiting."
             exit 1
           else
-            echo "There are new commits to merge."
+            echo "There are ${new_commits} commits to merge."
           fi
 
       - name: Create list of commits to cherrypick (based from master)
