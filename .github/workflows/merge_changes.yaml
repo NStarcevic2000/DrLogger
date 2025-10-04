@@ -9,9 +9,8 @@ on:
         type: choice
         options:
           - 'master'
-          - 'release/v1.0'
           - 'release/v1.1'
-        hint: 'Will merge to all branches above selected one'
+          - 'release/v1.0'
       feature_branch:
         description: 'Feature branch'
         required: true
@@ -42,22 +41,14 @@ jobs:
           ref: ${{ github.event.inputs.feature_branch }}
           fetch-depth: 0
 
-      - name: Create a list of release branches
-        id: create_release_branch_list
+      - name: Create integration branch for selected release branch
+        id: create_integration_branch
         run: |
-          echo "release_branches=${{ github.event.inputs.release_branch }}" | tr ',' '\n' > release_branches.txt
-          echo "release_branches=$(cat release_branches.txt)" >> $GITHUB_OUTPUT
-
-      - name: Create integration branches for each release branch
-        id: create_integration_branches
-        run: |
-          while IFS= read -r release_branch; do
-            integration_branch="integration/${release_branch//\//-}-$(date +%Y%m%d%H%M%S)"
-            git checkout -b "$integration_branch"
-            echo "Created integration branch: $integration_branch"
-            echo "$integration_branch" >> integration_branches.txt
-          done < release_branches.txt
-          echo "integration_branches=$(cat integration_branches.txt)" >> $GITHUB_OUTPUT
+          integration_branch="integration/${{ github.event.inputs.release_branch //\//- }}-$(date +%Y%m%d%H%M%S)"
+          git checkout -b "$integration_branch"
+          echo "Created integration branch: $integration_branch"
+          echo "$integration_branch" > integration_branches.txt
+          echo "integration_branch=$integration_branch" >> $GITHUB_OUTPUT
       
       - name: Create list of commits to cherrypick (based from master)
         id: list_commits
@@ -65,32 +56,34 @@ jobs:
           git log origin/${{ github.event.inputs.feature_branch }}..master --pretty=format:"%H" > commits_to_cherrypick.txt
           echo "commits_to_cherrypick=$(cat commits_to_cherrypick.txt)" >> $GITHUB_OUTPUT
       
-      - name: Cherry-pick commits into each integration branch
+      - name: Cherry-pick commits into integration branch
         id: cherry_pick_commits
         run: |
-          while IFS= read -r integration_branch; do
-            git checkout "$integration_branch"
-            while IFS= read -r commit; do
-              git cherry-pick "$commit" || {
-                echo "Conflict occurred while cherry-picking commit $commit into $integration_branch. Aborting cherry-pick."
-                git cherry-pick --abort
-                exit 1
-              }
-            done < commits_to_cherrypick.txt
-            echo "Cherry-picked commits into $integration_branch"
-          done < integration_branches.txt
+          if [ ! -s commits_to_cherrypick.txt ]; then
+            echo "No commits to cherry-pick."
+            exit 0
+          fi
+          integration_branch=$(cat integration_branches.txt)
+          git checkout "$integration_branch"
+          while IFS= read -r commit; do
+            git cherry-pick "$commit" || {
+              echo "Conflict occurred while cherry-picking commit $commit into $integration_branch. Aborting cherry-pick."
+              git cherry-pick --abort
+              exit 1
+            }
+          done < commits_to_cherrypick.txt
+          echo "Cherry-picked commits into $integration_branch"
       
-      - name: Push integration branches and create squashed pull requests
+      - name: Push integration branch and create squashed pull request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          while IFS= read -r integration_branch; do
+          integration_branch=$(cat integration_branches.txt)
           git push origin "$integration_branch"
-            gh pr create \
-              --base "${integration_branch#integration/}" \
-              --head "$integration_branch" \
-              --title "Squash cherrypick changes from ${{ github.event.inputs.feature_branch }} into ${integration_branch#integration/}" \
-              --body "This pull request was automatically created to squash cherrypick changes from \`${{ github.event.inputs.feature_branch }}\` into \`${integration_branch#integration/}\`.\n\nPlease review the changes and resolve any conflicts if necessary." \
-              --label "automated-cherry-pick" \
-              --draft=false
-          done < integration_branches.txt
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          gh pr create \
+            --base "${{ github.event.inputs.release_branch }}" \
+            --head "$integration_branch" \
+            --title "Squash cherrypick changes from ${{ github.event.inputs.feature_branch }} into ${{ github.event.inputs.release_branch }}" \
+            --body "This pull request was automatically created to squash cherrypick changes from \`${{ github.event.inputs.feature_branch }}\` into \`${{ github.event.inputs.release_branch }}\`.\n\nPlease review the changes and resolve any conflicts if necessary." \
+            --label "automated-cherry-pick" \
+            --draft=false
