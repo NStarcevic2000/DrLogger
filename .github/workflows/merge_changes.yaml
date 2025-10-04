@@ -34,19 +34,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.feature_branch }}
           fetch-depth: 0
           fetch-tags: true
-
-      - name: Fetch all branches and checkout the release branch
-        shell: bash
-        run: |
-          git fetch --all
-          git checkout "${{ github.event.inputs.release_branch }}"
 
       - name: Check if there is anything to merge
         id: check_merge
         shell: bash
         run: |
+          git fetch origin ${{ github.event.inputs.release_branch }}:${{ github.event.inputs.release_branch }} || true
           if git rev-parse --verify ${{ github.event.inputs.release_branch }} >/dev/null 2>&1; then
             echo "Release branch exists."
           else
@@ -65,6 +61,7 @@ jobs:
         id: list_commits
         shell: bash
         run: |
+          git fetch origin ${{ github.event.inputs.feature_branch }}:${{ github.event.inputs.feature_branch }} || true
           git log master..${{ github.event.inputs.feature_branch }} --pretty=format:"%H" > commits_to_cherrypick.txt
           echo "commits_to_cherrypick=$(cat commits_to_cherrypick.txt)" >> $GITHUB_OUTPUT
 
