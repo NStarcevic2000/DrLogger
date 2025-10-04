@@ -46,13 +46,13 @@ jobs:
         id: check_merge
         shell: bash
         run: |
-          if git rev-parse --verify origin/${{ github.event.inputs.release_branch }} >/dev/null 2>&1; then
+          if git rev-parse --verify ${{ github.event.inputs.release_branch }} >/dev/null 2>&1; then
             echo "Release branch exists."
           else
             echo "Release branch does not exist. Exiting."
             exit 1
           fi
-          if [ "$(git rev-list --count origin/${{ github.event.inputs.feature_branch }} ^origin/${{ github.event.inputs.release_branch }})" -eq 0 ]; then
+          if [ "$(git rev-list --count ${{ github.event.inputs.feature_branch }} ^${{ github.event.inputs.release_branch }})" -eq 0 ]; then
             echo "No new commits to merge from ${{ github.event.inputs.feature_branch }} to ${{ github.event.inputs.release_branch }}. Exiting."
             exit 1
           else
