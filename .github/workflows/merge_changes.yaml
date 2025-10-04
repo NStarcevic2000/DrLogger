@@ -35,7 +35,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.feature_branch }}
-          fetch-depth: 0
 
       - name: Create integration branch for selected release branch
         id: create_integration_branch
