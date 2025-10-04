@@ -36,7 +36,6 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-        shell: bash
 
       - name: Checkout feature branch
         shell: bash
