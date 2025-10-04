@@ -4,14 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       release_branch:
-        description: 'Select branch(es) to merge changes into'
+        description: 'Select branch to merge changes into'
         required: true
         type: choice
         options:
           - 'master'
           - 'release/v1.0'
           - 'release/v1.1'
-        multiple: true
       feature_branch:
         description: 'Feature branch'
         required: true
