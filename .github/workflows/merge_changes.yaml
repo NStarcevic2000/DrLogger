@@ -38,6 +38,10 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       
+      - name: Fetch all branches
+        shell: bash
+        run: git fetch --all
+      
       - name: Check if there is anything to merge
         id: check_merge
         shell: bash
