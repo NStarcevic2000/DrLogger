@@ -1,3 +1,26 @@
+name: 'Merge Feature Branch'
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: 'Select branch to merge changes into'
+        required: true
+        type: choice
+        options:
+          - 'master'
+          - 'release/v1.1'
+          - 'release/v1.0'
+      feature_branch:
+        description: 'Feature branch'
+        required: true
+        type: string
+      is_a_prerelease:
+        description: 'Is this a prerelease?'
+        required: true
+        type: boolean
+        default: false
+
 jobs:
   build:
     runs-on: windows-latest
@@ -18,7 +41,7 @@ jobs:
         id: create_integration_branch
         shell: bash
         run: |
-          integration_branch="integration/${{ github.event.inputs.release_branch }}/${{ github.event.inputs.feature_branch }}"
+          integration_branch="integration/${{ github.event.inputs.release_branch //\//- }}-$(date +%Y%m%d%H%M%S)"
           git checkout -b "$integration_branch"
           echo "Created integration branch: $integration_branch"
           echo "$integration_branch" > integration_branches.txt
