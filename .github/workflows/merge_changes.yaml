@@ -39,9 +39,8 @@ jobs:
         run: |
           git fetch origin ${{ github.event.inputs.feature_branch }}:${{ github.event.inputs.feature_branch }} || true
           git log master..${{ github.event.inputs.feature_branch }} --pretty=format:"%H" > commits_to_cherrypick.txt
-          echo "commits_to_cherrypick=$(cat commits_to_cherrypick.txt)" >> $GITHUB_OUTPUT
       
-      - name: Cherry-pick commits into release branch
+      - name: Cherry-pick commits
         id: cherry_pick_commits
         shell: bash
         run: |
@@ -49,15 +48,18 @@ jobs:
             echo "No commits to cherry-pick."
             exit 1
           fi
-          git checkout ${{ github.event.inputs.release_branch }}
           while IFS= read -r commit; do
-            git cherry-pick "$commit" || {
-              echo "Conflict occurred while cherry-picking commit $commit into ${{ github.event.inputs.release_branch }}. Aborting cherry-pick."
+            git cherry-pick --no-commit "$commit" || {
+              echo "Conflict occurred while cherry-picking commit $commit. Aborting cherry-pick."
               git cherry-pick --abort
               exit 1
             }
           done < commits_to_cherrypick.txt
-          echo "Cherry-picked commits into ${{ github.event.inputs.release_branch }}"
+          echo "Cherry-picked commits into integration/${{ github.event.inputs.feature_branch }}-to-${{ github.event.inputs.release_branch }}"
+
+      - name: Cleanup before PR creation
+        run: |
+          rm -rf commits_to_cherrypick.txt
 
       - name: Create squashed pull request
         uses: peter-evans/create-pull-request@v5
