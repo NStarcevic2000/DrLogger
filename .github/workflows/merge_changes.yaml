@@ -31,16 +31,17 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Checkout repository
+      - name: Checkout specific branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.release_branch }}
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Checkout feature branch
+      - name: Fetch all branches within shell
         shell: bash
-        run: git checkout "${{ github.event.inputs.feature_branch }}"
-      
+        run: git fetch --all
+
       - name: Check if there is anything to merge
         id: check_merge
         shell: bash
