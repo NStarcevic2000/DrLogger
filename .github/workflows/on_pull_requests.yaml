@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Checkout specific branch
+      - name: Checkout branch
         uses: actions/checkout@v4
 
       - name: Run Tests

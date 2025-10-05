@@ -1,0 +1,84 @@
+name: Create Release on Push to Release Branch
+
+on:
+  push:
+    branches:
+      - 'release/**'
+
+permissions:
+  contents: write 
+
+jobs:
+  build:
+    runs-on: windows-latest
+    continue-on-error: false
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Run Tests
+        run: |
+          make run-test
+
+      - name: Build Application
+        run: |
+          make build
+      
+      - name: Set up Git
+        run: |
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+      - name: Extract previous release versions
+        id: extract
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "Branch: $BRANCH_NAME"
+          VERSION_PREFIX=$(echo "$BRANCH_NAME" | grep -oP 'release\/v\K[0-9]+\.[0-9]+')
+
+          MAJOR=$(echo "$VERSION_PREFIX" | cut -d. -f1)
+          echo "MAJOR=$MAJOR" >> $GITHUB_ENV
+          echo "Major: $MAJOR"
+          echo "MAJOR=$MAJOR" >> $GITHUB_ENV
+
+          MINOR=$(echo "$VERSION_PREFIX" | cut -d. -f2)
+          echo "Minor: $MINOR"
+          echo "MINOR=$MINOR" >> $GITHUB_ENV
+          
+          # Find the latest tag matching v{major}.{minor}.*
+          PATCH=$(git tag --list "v${MAJOR}.${MINOR}.*" --sort=-v:refname | head -n1)
+          echo "Patch: $PATCH"
+          echo "PATCH=$PATCH" >> $GITHUB_ENV
+
+          # Increase PATCH value by one
+          PATCH=$((PATCH + 1))
+          echo "Next Patch: $PATCH"
+
+      - name: Publish Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
+          release_name: "Release v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
+          body: |
+            **Commit:** `${{ github.sha }}`
+          draft: false
+          prerelease: false
+      
+      - name: Upload Application
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/DrLogger.exe
+          asset_name: DrLogger.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+
