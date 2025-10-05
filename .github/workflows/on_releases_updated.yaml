@@ -54,11 +54,10 @@ jobs:
           git fetch --tags
           PATCH=$(git tag --list "release/v${MAJOR}.${MINOR}.*" --sort=-v:refname | cut -d. -f3 | head -n1)
           echo "Patch: $PATCH"
-          echo "PATCH=$PATCH" >> $GITHUB_ENV
-
           # Increase PATCH value by one
           PATCH=$((PATCH + 1))
           echo "Next Patch: $PATCH"
+          echo "PATCH=$PATCH" >> $GITHUB_ENV
       
       - name: Tag current Commit
         run: |
