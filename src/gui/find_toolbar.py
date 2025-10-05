@@ -105,6 +105,8 @@ class FindToolbar(QToolBar):
         if not isinstance(render_logs_table, RenderedLogsTable):
             render_logs_table = RenderedLogsTable()
             FooterNotebook().set_widget(FOOTER_PAGE.FIND_RESULTS, render_logs_table)
+        else:
+            FooterNotebook().set_in_focus(FOOTER_PAGE.FIND_RESULTS)
         render_logs_table.refresh(
             LogsManager().get_data(self.search_all_cache[2]),
             LogsManager().get_style(self.search_all_cache[2])
