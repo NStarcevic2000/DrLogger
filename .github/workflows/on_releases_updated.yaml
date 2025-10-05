@@ -51,6 +51,7 @@ jobs:
           echo "MINOR=$MINOR" >> $GITHUB_ENV
           
           # Find the latest tag matching v{major}.{minor}.*
+          git fetch --tags
           PATCH=$(git tag --list "v${MAJOR}.${MINOR}.*" --sort=-v:refname | head -n1)
           echo "Patch: $PATCH"
           echo "PATCH=$PATCH" >> $GITHUB_ENV
@@ -58,6 +59,11 @@ jobs:
           # Increase PATCH value by one
           PATCH=$((PATCH + 1))
           echo "Next Patch: $PATCH"
+      
+      - name: Tag current Commit
+        run: |
+          git tag "v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
+          git push origin "v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
 
       - name: Publish Release
         id: create_release
