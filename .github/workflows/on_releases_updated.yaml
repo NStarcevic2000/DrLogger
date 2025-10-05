@@ -52,7 +52,7 @@ jobs:
           
           # Find the latest tag matching v{major}.{minor}.*
           git fetch --tags
-          PATCH=$(git tag --list "v${MAJOR}.${MINOR}.*" --sort=-v:refname | head -n1)
+          PATCH=$(git tag --list "release/v${MAJOR}.${MINOR}.*" --sort=-v:refname | head -n1)
           echo "Patch: $PATCH"
           echo "PATCH=$PATCH" >> $GITHUB_ENV
 
@@ -62,8 +62,8 @@ jobs:
       
       - name: Tag current Commit
         run: |
-          git tag "v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
-          git push origin "v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
+          git tag "release/v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
+          git push origin "release/v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
 
       - name: Publish Release
         id: create_release
@@ -71,7 +71,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
+          tag_name: "release/v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
           release_name: "Release v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
           body: |
             **Commit:** `${{ github.sha }}`
