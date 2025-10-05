@@ -52,7 +52,7 @@ jobs:
           
           # Find the latest tag matching v{major}.{minor}.*
           git fetch --tags
-          PATCH=$(git tag --list "release/v${MAJOR}.${MINOR}.*" --sort=-v:refname | head -n1)
+          PATCH=$(git tag --list "release/v${MAJOR}.${MINOR}.*" --sort=-v:refname | cut -d. -f3 | head -n1)
           echo "Patch: $PATCH"
           echo "PATCH=$PATCH" >> $GITHUB_ENV
 
