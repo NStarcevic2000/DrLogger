@@ -4,15 +4,15 @@ import unittest
 
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
-from enum import Enum
 
 from util.config_enums import KEEP_SOURCE_FILE_LOCATION_ENUM
 
 from processor.open_logs_processor import OpenLogsProcessor
 from logs_managing.logs_manager import LogsManager
 from logs_managing.logs_column_types import DataColumn, MetadataColumn
+from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
+from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 
-from logs_managing.logs_column_types import COLUMN_TYPE
 from util.test_util import assert_columns_by_type
 
 class TestOpenLogsProcessor(unittest.TestCase):
@@ -38,12 +38,12 @@ class TestOpenLogsProcessor(unittest.TestCase):
             keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.FULL_PATH
         )
         # Assert columns by type
-        expected_cols = [(DataColumn, 'File'), (DataColumn, 'Message'), (MetadataColumn, 'Original Messages')]
+        expected_cols = [(DataColumn, RColNameNS.File), (DataColumn, RColNameNS.Message), (MetadataColumn, RMetaNS.General.OriginalLogs)]
         assert_columns_by_type(ret_columns, expected_cols)
         # Check the generated DataFrame
         result_df = LogsManager().simulate_rendered_data(ret_columns)
         expected_df = DataFrame(
-            {'File': 3 * [self.tmp_file.name], 'Message': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]}
+            {RColNameNS.File: 3 * [self.tmp_file.name], RColNameNS.Message: ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]}
         )
         assert_frame_equal(result_df, expected_df, check_dtype=False)
 
@@ -62,8 +62,8 @@ class TestOpenLogsProcessor(unittest.TestCase):
         )
         expected_df = DataFrame(
             {
-                'File': 3 * [os.path.basename(self.tmp_file.name)] + 2 * [os.path.basename(tmp_file2.name)],
-                'Message': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi", "Sample 4 xyz", "Sample 5 mno"]
+                RColNameNS.File: 3 * [os.path.basename(self.tmp_file.name)] + 2 * [os.path.basename(tmp_file2.name)],
+                RColNameNS.Message: ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi", "Sample 4 xyz", "Sample 5 mno"]
             }
         )
         try:
@@ -87,12 +87,12 @@ class TestOpenLogsProcessor(unittest.TestCase):
             data=self.tmp_file.name,
             keep_source_file_location_arg=KEEP_SOURCE_FILE_LOCATION_ENUM.SHORT_PATH
         )
-        expected_cols = [(DataColumn, 'File'), (DataColumn, 'Message'), (MetadataColumn, 'Original Messages')]
+        expected_cols = [(DataColumn, RColNameNS.File), (DataColumn, RColNameNS.Message), (MetadataColumn, RMetaNS.General.OriginalLogs)]
         assert_columns_by_type(ret_columns, expected_cols)
         result_df = LogsManager().simulate_rendered_data(ret_columns)
         expected_df = DataFrame({
-            'File': 3 * [os.path.basename(self.tmp_file.name)],
-            'Message': ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]
+            RColNameNS.File: 3 * [os.path.basename(self.tmp_file.name)],
+            RColNameNS.Message: ["Sample 1 abc", "Sample 2 def", "Sample 3 ghi"]
         })
         assert_frame_equal(result_df, expected_df, check_dtype=False)
 
@@ -111,7 +111,7 @@ class TestOpenLogsProcessor(unittest.TestCase):
             )
         )
         expected_df = DataFrame(
-            {'File': 3 * [os.path.basename(tmp_file_crlf.name)], 'Message': ["Line 1", "Line 2", "Line 3"]}
+            {RColNameNS.File: 3 * [os.path.basename(tmp_file_crlf.name)], RColNameNS.Message: ["Line 1", "Line 2", "Line 3"]}
         )
         assert_frame_equal(result_df, expected_df, check_dtype=False)
         os.unlink(tmp_file_crlf.name)
@@ -128,7 +128,7 @@ class TestOpenLogsProcessor(unittest.TestCase):
             )
         )
         expected_df = DataFrame(
-            {'File': 3 * [os.path.basename(tmp_file_crlf.name)], 'Message': ["Line 1", "Line 2", "Line 3"]}
+            {RColNameNS.File: 3 * [os.path.basename(tmp_file_crlf.name)], RColNameNS.Message: ["Line 1", "Line 2", "Line 3"]}
         )
         try:
             assert_frame_equal(result_df, expected_df, check_dtype=False)

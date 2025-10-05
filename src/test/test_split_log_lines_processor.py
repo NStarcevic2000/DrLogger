@@ -7,7 +7,8 @@ from pandas.testing import assert_frame_equal
 
 from processor.split_log_lines_processor import SplitLogLinesProcessor
 from logs_managing.logs_manager import LogsManager
-from logs_managing.logs_column_types import CaptureMessageColumn, DataColumn, MetadataColumn
+from logs_managing.logs_column_types import DataColumn
+from logs_managing.reserved_names import RESERVED_COLUMN_NAMES as RColNameNS
 
 from util.test_util import assert_columns_by_type
 
@@ -28,14 +29,14 @@ class TestSplitLogLinesProcessor(unittest.TestCase):
         super().tearDown()
 
     def test_process_valid_dataframe(self):
-        input_df = DataFrame({'Message': ["Sample 1:abc", "Sample 2:def", "Sample 3:ghi"]})
+        input_df = DataFrame({RColNameNS.Message: ["Sample 1:abc", "Sample 2:def", "Sample 3:ghi"]})
         ret_columns = self.processor.process(
             input_df.copy(),
             pattern_format_arg="<Group1> <Group2>:<Group3>",
             timestamp_format_arg=""
         )
         # Assert column names and types
-        expected_columns = [(DataColumn, 'Group1'), (DataColumn, 'Group2'), (DataColumn, 'Group3'), (DataColumn, 'Message')]
+        expected_columns = [(DataColumn, 'Group1'), (DataColumn, 'Group2'), (DataColumn, 'Group3'), (DataColumn, RColNameNS.Message)]
         assert_columns_by_type(ret_columns, expected_columns)
 
         # Test simulate_rendered_data
@@ -44,12 +45,12 @@ class TestSplitLogLinesProcessor(unittest.TestCase):
             'Group1': ["Sample", "Sample", "Sample"],
             'Group2': ["1", "2", "3"],
             'Group3': ["abc", "def", "ghi"],
-            'Message': ["", "", ""]
+            RColNameNS.Message: ["", "", ""]
         })
         assert_frame_equal(result_df, expected_df, check_dtype=False)
 
     def test_empty_dataframe(self):
-        input_df = DataFrame({'Message': []})
+        input_df = DataFrame({RColNameNS.Message: []})
         ret_columns = self.processor.process(
             input_df.copy(),
             pattern_format_arg="<Group1> <Group2>:<Group3>",
@@ -61,7 +62,7 @@ class TestSplitLogLinesProcessor(unittest.TestCase):
 
     def test_timestamp_format(self):
         input_df = DataFrame({
-            'Message': [
+            RColNameNS.Message: [
                 "2023-10-01 12:00:00 Sample 1:abc",
                 "2023-10-01 12:01:00 Sample 2:def",
                 "2023-10-01 12:02:00 Sample 3:ghi"
@@ -74,15 +75,15 @@ class TestSplitLogLinesProcessor(unittest.TestCase):
         )
 
         # Assert column names and types
-        expected_columns = [(DataColumn, 'Timestamp'), (DataColumn, 'Type'), (DataColumn, 'From'), (DataColumn, 'Message')]
+        expected_columns = [(DataColumn, RColNameNS.Timestamp), (DataColumn, 'Type'), (DataColumn, 'From'), (DataColumn, RColNameNS.Message)]
         assert_columns_by_type(ret_columns, expected_columns)
 
         # Test simulate_rendered_data
         result_df = LogsManager().simulate_rendered_data(ret_columns)
         expected_df = DataFrame({
-            'Timestamp': ["2023-10-01 12:00:00", "2023-10-01 12:01:00", "2023-10-01 12:02:00"],
+            RColNameNS.Timestamp: ["2023-10-01 12:00:00", "2023-10-01 12:01:00", "2023-10-01 12:02:00"],
             'Type': ["Sample", "Sample", "Sample"],
             'From': ["1", "2", "3"],
-            'Message': ["abc", "def", "ghi"]
+            RColNameNS.Message: ["abc", "def", "ghi"]
         })
         assert_frame_equal(result_df, expected_df, check_dtype=False)

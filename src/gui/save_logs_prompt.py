@@ -1,12 +1,6 @@
-from PyQt5.QtWidgets import QDialog, QLabel, QHBoxLayout, QVBoxLayout, QComboBox, QPushButton, QApplication, QFileDialog
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QFileDialog, QApplication
 
-import csv
-from enum import Enum
 from pandas import DataFrame
-
-from logs_managing.logs_manager import LogsManager
-from logs_managing.reserved_names import RESERVED_METADATA_NAMES as RMetaNS
 
 from util.singleton import singleton
 
