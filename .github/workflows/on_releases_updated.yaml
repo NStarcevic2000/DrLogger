@@ -39,7 +39,7 @@ jobs:
         run: |
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           echo "Branch: $BRANCH_NAME"
-          VERSION_PREFIX=$(echo "$BRANCH_NAME" | grep -oP 'release\/v\K[0-9]+\.[0-9]+')
+          VERSION_PREFIX=$(echo "$BRANCH_NAME" | sed -nE 's|^release/v([0-9]+\.[0-9]+)$|\1|p')
 
           MAJOR=$(echo "$VERSION_PREFIX" | cut -d. -f1)
           echo "MAJOR=$MAJOR" >> $GITHUB_ENV
@@ -51,13 +51,18 @@ jobs:
           echo "MINOR=$MINOR" >> $GITHUB_ENV
           
           # Find the latest tag matching v{major}.{minor}.*
-          PATCH=$(git tag --list "v${MAJOR}.${MINOR}.*" --sort=-v:refname | head -n1)
+          git fetch --tags
+          PATCH=$(git tag --list "release/v${MAJOR}.${MINOR}.*" --sort=-v:refname | cut -d. -f3 | head -n1)
           echo "Patch: $PATCH"
-          echo "PATCH=$PATCH" >> $GITHUB_ENV
-
           # Increase PATCH value by one
           PATCH=$((PATCH + 1))
           echo "Next Patch: $PATCH"
+          echo "PATCH=$PATCH" >> $GITHUB_ENV
+      
+      - name: Tag current Commit
+        run: |
+          git tag "release/v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
+          git push origin "release/v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
 
       - name: Publish Release
         id: create_release
@@ -65,7 +70,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
+          tag_name: "release/v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
           release_name: "Release v${{ env.MAJOR }}.${{ env.MINOR }}.${{ env.PATCH }}"
           body: |
             **Commit:** `${{ github.sha }}`
