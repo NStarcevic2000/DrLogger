@@ -18,7 +18,7 @@ import pstats
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    # Initialization purposes
+    # Initialization purpose
     ProcessorManager()
     
     CfgMan().register(
