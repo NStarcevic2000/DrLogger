@@ -62,7 +62,7 @@ class FindToolbar(QToolBar):
         self.hide()
 
     def restart_search(self):
-        idx_list = self.searchable_table.get_search_indexes(self.find_widget.text())[0]
+        idx_list = self.searchable_table.get_search_indexes(self.find_widget.text())[1]
         self.search_cache = (self.find_widget.text(), idx_list)
         self.searching_index = -1
         self.find_next()
@@ -105,6 +105,8 @@ class FindToolbar(QToolBar):
         if not isinstance(render_logs_table, RenderedLogsTable):
             render_logs_table = RenderedLogsTable()
             FooterNotebook().set_widget(FOOTER_PAGE.FIND_RESULTS, render_logs_table)
+        else:
+            FooterNotebook().set_in_focus(FOOTER_PAGE.FIND_RESULTS)
         render_logs_table.refresh(
             LogsManager().get_data(self.search_all_cache[2]),
             LogsManager().get_style(self.search_all_cache[2])
