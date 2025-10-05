@@ -41,24 +41,11 @@ jobs:
         id: cherry_pick_commits
         shell: bash
         run: |
-          if [ ! -s commits_to_cherrypick.txt ]; then
-            echo "No commits to cherry-pick."
+          git cherry-pick ${{ env.COMMITS }} || {
+            echo "Conflict occurred while cherry-picking commit $commit. Aborting cherry-pick."
+            git cherry-pick --abort
             exit 1
-          fi
-          while IFS= read -r commit; do
-            git cherry-pick ${{ env.COMMITS }} || {
-              echo "Conflict occurred while cherry-picking commit $commit. Aborting cherry-pick."
-              git cherry-pick --abort
-              exit 1
-            }
-          done < commits_to_cherrypick.txt
-          # Debugging purposes
-          git status
-
-      - name: Cleanup before PR creation
-        shell: bash
-        run: |
-          rm -rf commits_to_cherrypick.txt
+          }
 
       - name: Create squashed pull request
         uses: peter-evans/create-pull-request@v7
